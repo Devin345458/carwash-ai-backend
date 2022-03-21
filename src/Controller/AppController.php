@@ -51,6 +51,7 @@ class AppController extends Controller
     {
         parent::initialize();
 
+        // Force every request to be json
         $this->setRequest($this->getRequest()->withParam('_ext', 'json'));
         Router::setRequest($this->getRequest());
 
@@ -96,7 +97,6 @@ class AppController extends Controller
             $this->set($array);
         }
     }
-
 
     public function json(array $data) {
         $this->set($data);

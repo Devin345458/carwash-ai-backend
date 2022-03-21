@@ -222,5 +222,9 @@ Configure::load('app_queue');
 
 require_once 'events.php';
 
-Configure::write('Bake.theme', 'Api');
-Configure::write('Bake.prefix', 'Api/v1');
+if (Configure::read('App.debug')) {
+    Configure::write('Bake.theme', 'Api');
+    Configure::write('Bake.prefix', 'Api/v1');
+}
+
+
