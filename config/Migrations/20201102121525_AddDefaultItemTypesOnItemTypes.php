@@ -18,19 +18,9 @@ class AddDefaultItemTypesOnItemTypes extends AbstractMigration
      */
     public function up()
     {
-        $table = $this->getTableLocator()->get('ItemTypes');
-        $item_types = $table->newEntities([
-            [
-                'name' => 'Parts'
-            ],
-            [
-                'name' => 'Consumables'
-            ],
-            [
-                'name' => 'Tools'
-            ]
-        ]);
-        $table->saveMany($item_types);
+        $this->query("INSERT INTO item_types (name) values ('Parts')");
+        $this->query("INSERT INTO item_types (name) values ('Consumables')");
+        $this->query("INSERT INTO item_types (name) values ('Tools')");
     }
 
     public function down()

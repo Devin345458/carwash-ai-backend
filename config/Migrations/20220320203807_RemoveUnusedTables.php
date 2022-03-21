@@ -14,12 +14,6 @@ class RemoveUnusedTables extends AbstractMigration
      */
     public function change()
     {
-        $this->table('subtasks')->drop()->update();
-        $this->table('shared_equipments')->drop()->update();
-        $this->table('shared_items')->drop()->update();
-        $this->table('shared_maintenances')->drop()->update();
-        $this->table('shared_maintenances_shared_items')->drop()->update();
-        $this->table('shared_maintenances_shared_items')->drop()->update();
         $this->table('comments_maintenance_sessions_maintenances')->drop()->update();
         $this->table('completed_maintenances')->drop()->update();
         $this->table('claims')->drop()->update();

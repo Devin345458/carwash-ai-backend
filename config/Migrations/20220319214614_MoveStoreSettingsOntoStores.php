@@ -16,12 +16,22 @@ class MoveStoreSettingsOntoStores extends AbstractMigration
     {
         $table = $this->table('stores');
         $table->addColumn('allow_car_counts', 'boolean');
-        $table->addColumn('maintenance_due_days_offset', 'integer');
-        $table->addColumn('maintenance_due_cars_offset', 'integer');
-        $table->addColumn('upcoming_days_offset', 'integer');
-        $table->addColumn('upcoming_cars_offset', 'integer');
+        $table->addColumn('maintenance_due_days_offset', 'integer', [
+            'default' => 0
+        ]);
+        $table->addColumn('maintenance_due_cars_offset', 'integer', [
+            'default' => 0
+        ]);
+        $table->addColumn('upcoming_days_offset', 'integer', [
+            'default' => 2
+        ]);
+        $table->addColumn('upcoming_cars_offset', 'integer', [
+            'default' => 2000
+        ]);
         $table->addColumn('time_zone', 'string');
-        $table->addColumn('require_scan', 'boolean');
+        $table->addColumn('require_scan', 'boolean', [
+            'default' => 0
+        ]);
         $table->update();
         $this->table('store_settings')->drop()->update();
     }

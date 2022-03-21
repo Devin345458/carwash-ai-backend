@@ -223,6 +223,7 @@ class UsersTable extends Table
                 'email' => $data['email'],
                 'billing_last_name' => $data['first_name'],
                 'billing_first_name' => $data['last_name'],
+                'allow_car_count' => false,
             ]);
 
             if (!$this->Companies->save($company)) {
