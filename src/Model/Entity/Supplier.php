@@ -1,7 +1,6 @@
 <?php
 namespace App\Model\Entity;
 
-use App\Model\Entity\Traits\UploadTrait;
 use Cake\ORM\Entity;
 
 /**

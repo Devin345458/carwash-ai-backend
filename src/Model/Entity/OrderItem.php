@@ -1,12 +1,7 @@
 <?php
 namespace App\Model\Entity;
 
-use App\Model\Entity\Traits\UploadTrait;
-use Aws\S3\S3Client;
-use Cake\Collection\Collection;
-use Cake\Core\Configure;
 use Cake\I18n\FrozenTime;
-use Cake\Log\Log;
 use Cake\ORM\Entity;
 
 /**
@@ -30,8 +25,6 @@ use Cake\ORM\Entity;
  */
 class OrderItem extends Entity
 {
-    use UploadTrait;
-
     /**
      * Fields that can be mass assigned using newEntity() or patchEntity().
      *
@@ -65,8 +58,6 @@ class OrderItem extends Entity
 
     protected function _getPurchaseCost($cost)
     {
-        return $cost ? $cost : '';
+        return $cost ?: '';
     }
-
-    protected $_virtual = ['S3url', 'Thumbnail'];
 }

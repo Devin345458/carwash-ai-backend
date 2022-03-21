@@ -1,11 +1,7 @@
 <?php
 namespace App\Model\Entity;
 
-use App\Model\Entity\Traits\UploadTrait;
-use Aws\S3\S3Client;
-use Cake\Core\Configure;
 use Cake\I18n\FrozenTime;
-use Cake\Log\Log;
 use Cake\ORM\Entity;
 
 /**

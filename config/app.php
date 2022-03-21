@@ -422,7 +422,6 @@ return [
     /*
     * To define impersonate component session
     */
-
     'Impersonate' => [
         'sessionKey' => 'OriginalAuth',
         'finder' => 'Auth',

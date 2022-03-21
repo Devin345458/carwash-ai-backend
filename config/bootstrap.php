@@ -203,28 +203,8 @@ Date::setJsonEncodeFormat('yyyy-MM-dd');  // For any mutable Date
 FrozenDate::setJsonEncodeFormat('yyyy-MM-dd');  // For any immutable Dat
 Date::setToStringFormat('yyyy-MM-dd');
 
-/*
- * Time Formats
- *
- * Handle formatting time in JSON responses
- * @todo - Figure out if these are the correct format
- *
- */
-
-Configure::write('bucket', 'maintenanceaisystems-images');
-Configure::write('s3_url', 'https://maintenanceaisystems-images.s3.amazonaws.com/');
-
-if (env('STRIPE_KEY')) {
-    Configure::write('STRIPE_KEY', env('STRIPE_KEY'));
-}
 
 Configure::load('app_queue');
 
 require_once 'events.php';
-
-if (Configure::read('App.debug')) {
-    Configure::write('Bake.theme', 'Api');
-    Configure::write('Bake.prefix', 'Api/v1');
-}
-
 

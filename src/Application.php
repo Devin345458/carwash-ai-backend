@@ -56,10 +56,6 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
 
         $this->addPlugin('ADmad/Sequence');
 
-        $this->addPlugin('Devin345458/Api');
-
-        $this->addPlugin('IdeHelper');
-
         $this->addPlugin('Queue', ['routes' => true]);
 
         $this->addPlugin('Duplicatable');
@@ -157,10 +153,10 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             $this->addPlugin('Bake');
             $this->addPlugin('Migrations');
             $this->addPlugin('IdeHelper');
+            $this->addPlugin('Devin345458/Api');
+            $this->addPlugin('IdeHelper');
         } catch (MissingPluginException $e) {
             // Do not halt if the plugin is missing
         }
-
-        $this->addPlugin('Devin345458/Api');
     }
 }

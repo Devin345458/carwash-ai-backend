@@ -1,7 +1,6 @@
 <?php
 namespace App\Model\Entity;
 
-use App\Model\Entity\Traits\UploadTrait;
 use Cake\I18n\FrozenTime;
 use Cake\ORM\Entity;
 
@@ -37,8 +36,6 @@ use Cake\ORM\Entity;
  */
 class Maintenance extends Entity
 {
-    use UploadTrait;
-
     /**
      * Fields that can be mass assigned using newEntity() or patchEntity().
      *
@@ -51,6 +48,4 @@ class Maintenance extends Entity
     protected $_accessible = [
         '*' => true,
     ];
-
-    protected $_virtual = ['S3url', 'Thumbnail'];
 }
