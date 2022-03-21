@@ -9,9 +9,7 @@
 namespace App\Controller\Component;
 
 use App\Utility\NotificationManager;
-use App\Utility\Pusher\PusherSdkClient;
 use Cake\Controller\Component;
-use Cake\Core\Configure;
 use Cake\ORM\Query;
 use Cake\ORM\TableRegistry;
 
@@ -25,10 +23,6 @@ class notificationComponent extends Component
     protected $_defaultConfig = [
         'UsersModel' => 'Users',
     ];
-    /**
-     * @var PusherSdkClient $pusherClient
-     */
-    private $pusherClient;
     /**
      * The controller.
      *
@@ -49,15 +43,6 @@ class notificationComponent extends Component
     public function initialize(array $config): void
     {
         parent::initialize($config);
-        $this->pusherClient = new PusherSdkClient(
-            env('PUSHER_APPKEY'),
-            env('PUSHER_SECRET'),
-            env('PUSHER_APPID'),
-            [
-                'cluster' => 'us2',
-                'useTLS' => true,
-            ]
-        );
         $this->notificationTable = TableRegistry::getTableLocator()->get('Notifications');
         $this->Controller = $this->_registry->getController();
     }
@@ -66,7 +51,6 @@ class notificationComponent extends Component
      * @param  string $level - Options = 'store', 'company', 'user'
      * @param  array  $roles - List of roles
      * @param  array  $data  - required
-     * @throws \Pusher\PusherException
      */
     public function sendNotification($level, array $roles, array $data)
     {
@@ -90,7 +74,6 @@ class notificationComponent extends Component
         }
 
         foreach ($send_list as $id) {
-            $this->pusherClient->publish($channel, 'newNotification', $data);
         }
     }
 

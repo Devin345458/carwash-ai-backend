@@ -6,9 +6,6 @@ use Pusher\Pusher;
 
 class PusherSdkClient implements Client
 {
-    /**
-     * @var \Pusher
-     */
     private $pusher;
 
     /**
