@@ -18,7 +18,6 @@ if (!defined('STDIN')) {
     define('STDIN', fopen('php://stdin', 'r'));
 }
 
-use Cake\Utility\Security;
 use Composer\IO\IOInterface;
 use Composer\Script\Event;
 use Exception;
@@ -56,7 +55,6 @@ class Installer
 
         $rootDir = dirname(dirname(__DIR__));
 
-        static::createAppConfig($rootDir, $io);
         static::createWritableDirectories($rootDir, $io);
 
         // ask if the permissions should be changed
@@ -79,30 +77,6 @@ class Installer
             }
         } else {
             static::setFolderPermissions($rootDir, $io);
-        }
-
-        static::setSecuritySalt($rootDir, $io);
-
-        $class = 'Cake\Codeception\Console\Installer';
-        if (class_exists($class)) {
-            $class::customizeCodeceptionBinary($event);
-        }
-    }
-
-    /**
-     * Create the config/app.php file if it does not exist.
-     *
-     * @param  string      $dir The application's root directory.
-     * @param  IOInterface $io  IO interface to write to console.
-     * @return void
-     */
-    public static function createAppConfig($dir, $io)
-    {
-        $appConfig = $dir . '/config/app.php';
-        $defaultConfig = $dir . '/config/app.default.php';
-        if (!file_exists($appConfig)) {
-            copy($defaultConfig, $appConfig);
-            $io->write('Created `config/app.php` file');
         }
     }
 
@@ -168,79 +142,5 @@ class Installer
         $walker($dir . '/tmp');
         $changePerms($dir . '/tmp');
         $changePerms($dir . '/logs');
-    }
-
-    /**
-     * Set the security.salt value in the application's config file.
-     *
-     * @param  string      $dir The application's root directory.
-     * @param  IOInterface $io  IO interface to write to console.
-     * @return void
-     */
-    public static function setSecuritySalt($dir, $io)
-    {
-        $newKey = hash('sha256', Security::randomBytes(64));
-        static::setSecuritySaltInFile($dir, $io, $newKey, 'app.php');
-    }
-
-    /**
-     * Set the security.salt value in a given file
-     *
-     * @param  string      $dir    The application's root directory.
-     * @param  IOInterface $io     IO interface to write to console.
-     * @param  string      $newKey key to set in the file
-     * @param  string      $file   A path to a file relative to the application's root
-     * @return void
-     */
-    public static function setSecuritySaltInFile($dir, $io, $newKey, $file)
-    {
-        $config = $dir . '/config/' . $file;
-        $content = file_get_contents($config);
-
-        $content = str_replace('__SALT__', $newKey, $content, $count);
-
-        if ($count == 0) {
-            $io->write('No Security.salt placeholder to replace.');
-
-            return;
-        }
-
-        $result = file_put_contents($config, $content);
-        if ($result) {
-            $io->write('Updated Security.salt value in config/' . $file);
-
-            return;
-        }
-        $io->write('Unable to update Security.salt value.');
-    }
-
-    /**
-     * Set the APP_NAME value in a given file
-     *
-     * @param  string      $dir     The application's root directory.
-     * @param  IOInterface $io      IO interface to write to console.
-     * @param  string      $appName app name to set in the file
-     * @param  string      $file    A path to a file relative to the application's root
-     * @return void
-     */
-    public static function setAppNameInFile($dir, $io, $appName, $file)
-    {
-        $config = $dir . '/config/' . $file;
-        $content = file_get_contents($config);
-        $content = str_replace('__APP_NAME__', $appName, $content, $count);
-
-        if ($count == 0) {
-            $io->write('No __APP_NAME__ placeholder to replace.');
-
-            return;
-        }
-
-        $result = file_put_contents($config, $content);
-        if ($result) {
-            $io->write('Updated __APP_NAME__ value in config/' . $file);
-
-            return;
-        }
-        $io->write('Unable to update __APP_NAME__ value.');
     }
 }

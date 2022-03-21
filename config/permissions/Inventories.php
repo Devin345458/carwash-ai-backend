@@ -1,6 +1,6 @@
 <?php
 
-use Cake\Network\Request;
+use Cake\Http\Client\Request;
 use Cake\ORM\TableRegistry;
 use Cake\Utility\Hash;
 
