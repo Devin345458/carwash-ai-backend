@@ -6,8 +6,7 @@ $config = [
         'table' => 'Users',
         'Email' => [
             'required' => true,
-            'validate' => false,
-            'mailerClass' => \App\Mailer\UsersMailer::class,
+            'validate' => false
         ],
         'Token' => ['expiration' => 3600],
         'Registration' => [
@@ -38,7 +37,7 @@ $config = [
             ],
         ],
         'authorize' => [
-            'CakeDC/Auth.Superuser',
+            'c/Auth.Superuser',
             'CakeDC/Auth.SimpleRbac',
         ],
         'storage' => 'Memory',

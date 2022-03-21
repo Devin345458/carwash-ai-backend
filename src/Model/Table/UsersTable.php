@@ -233,7 +233,7 @@ class UsersTable extends Table
                 'email' => $data['email'],
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
-                'role' => 'admin',
+                'role' => 'owner',
                 'password' => $data['password'],
                 'company_id' => $company->id,
             ]);
