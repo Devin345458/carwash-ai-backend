@@ -113,7 +113,7 @@ class File extends Entity
             $extension = pathinfo($this->get('name'), PATHINFO_EXTENSION);
             foreach ($this->dimensions as $name => $dimensions) {
                 try {
-                    $responsive[$name] = env('S3_PUBLIC_URL') . '/' . env('S3_BUCKET') . '/' . $this->dir . '/' . str_replace('.' . $extension, '', $this->get('name')) . '_' . $name . '.' . $extension;
+                    $responsive[$name] = env('S3_PUBLIC_URL') . '/' . $this->dir . '/' . str_replace('.' . $extension, '', $this->get('name')) . '_' . $name . '.' . $extension;
                 } catch (\Exception $exception) {
                     $responsive[$name] = false;
                 }
