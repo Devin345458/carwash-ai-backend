@@ -188,4 +188,9 @@ class MaintenancesController extends AppController
         ]);
         $this->set(compact('maintenance'));
     }
+
+    public function equipment($id = null) {
+        $maintenances = $this->Maintenances->find()->where(['Maintenances.equipment_id' => $id]);
+        $this->set(compact('maintenances'));
+    }
 }

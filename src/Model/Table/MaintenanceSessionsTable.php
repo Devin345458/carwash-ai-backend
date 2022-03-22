@@ -51,20 +51,7 @@ class MaintenanceSessionsTable extends Table
         $this->setDisplayField('id');
         $this->setPrimaryKey('id');
 
-        $this->addBehavior('WhoDidIt', [
-            'userModel' => 'Users',
-            'contain' => false,
-        ]);
-
-        $this->belongsTo('CreatedBy', [
-            'foreignKey' => 'created_by_id',
-            'joinType' => 'INNER',
-        ])->setClassName('Users');
-
-        $this->belongsTo('ModifiedBy', [
-            'foreignKey' => 'modified_by_id',
-            'joinType' => 'INNER',
-        ])->setClassName('Users');
+        $this->addBehavior('WhoDidIt');
 
         $this->belongsTo('Stores', [
             'foreignKey' => 'store_id',

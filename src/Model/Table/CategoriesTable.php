@@ -90,18 +90,6 @@ class CategoriesTable extends Table
             ->dateTime('modified')
             ->allowEmptyDateTime('modified', 'create');
 
-        $validator
-            ->scalar('created_by')
-            ->maxLength('created_by', 36)
-            ->minLength('created_by', 36)
-            ->allowEmptyString('created_by', 'create');
-
-        $validator
-            ->scalar('modified_by')
-            ->maxLength('modified_by', 36)
-            ->minLength('modified_by', 36)
-            ->allowEmptyString('modified_by', 'create');
-
         return $validator;
     }
 

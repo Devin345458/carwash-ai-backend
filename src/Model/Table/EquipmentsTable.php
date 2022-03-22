@@ -32,7 +32,6 @@ use League\Flysystem\AwsS3v3\AwsS3Adapter;
  * @property CategoriesTable|HasOne $category
  * @property CategoriesTable|BelongsToMany $Categories
  * @property CommentsTable|HasMany $Comments
- * @property CompletedMaintenancesTable|hasMany $CompletedMaintenances
  * @property CompaniesTable|BelongsTo $Companies
  * @property SuppliersTable|BelongsTo $Manufacturer
  * @property LocationsTable|BelongsTo $Locations

@@ -29,6 +29,8 @@ class SuppliersController extends AppController
             });
         }
 
+        $suppliers = array_merge([['id' => 0, 'name' => 'No Supplier']], $suppliers->toArray());
+
         $this->set(compact('suppliers'));
     }
 

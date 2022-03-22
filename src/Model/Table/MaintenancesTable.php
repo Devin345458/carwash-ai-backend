@@ -25,13 +25,12 @@ use Cake\Validation\Validator;
  * Maintenances Model
  *
  * @property EquipmentsTable|BelongsTo $Equipments
- * @property CompletedMaintenancesTable|HasMany $CompletedMaintenances
  * @property StoresTable|BelongsTo $Stores
  * @property ItemsTable|BelongsToMany Items
  * @property ItemsTable|BelongsToMany Parts
  * @property ItemsTable|BelongsToMany Consumables
  * @property ItemsTable|BelongsToMany Tools
- * @property ProceduresTable|BelongsToMany $Procedures
+ * @property MaintenanceSessionsMaintenancesTable|BelongsToMany MaintenanceSessionsMaintenances
  * @property ActivityLogsTable|HasMany $ActivityLogs
  * @method Maintenance get($primaryKey, $options = [])
  * @method Maintenance newEntity($data = null, array $options = [])
@@ -74,6 +73,7 @@ class MaintenancesTable extends Table
             'foreignKey' => 'equipment_id',
             'joinType' => 'INNER',
         ]);
+
         $this->belongsTo('Stores');
 
         $this->belongsToMany('Items');
@@ -107,12 +107,9 @@ class MaintenancesTable extends Table
             'joinType' => 'LEFT',
         ]);
 
-        $this->hasMany('CompletedMaintenances');
-        $this->hasMany('InventoryTransactions', [
-            'through' => 'CompletedMaintenances',
-        ]);
+        $this->hasMany('MaintenanceSessionsMaintenances');
 
-        $this->hasMany('Comments', [
+        $this->hasMany('InventoryTransactions', [
             'through' => 'CompletedMaintenances',
         ]);
 

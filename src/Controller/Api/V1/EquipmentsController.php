@@ -87,6 +87,28 @@ class EquipmentsController extends AppController
     }
 
     /**
+     * Add equipment to active store
+     *
+     * @return void
+     * @throws Exception
+     */
+    public function edit($id = null)
+    {
+        $this->getRequest()->allowMethod('POST');
+        $equipment = $this->Equipments->get($id, [
+            'contain' => [
+                'Categories',
+                'Locations',
+            ]
+        ]);
+        $equipment = $this->Equipments->patchEntity($equipment, $this->getRequest()->getData());
+        if (!$this->Equipments->save($equipment, ['associations' => ['Categories']])) {
+            throw new ValidationException($equipment);
+        }
+        $this->set(compact('equipment'));
+    }
+
+    /**
      * Get equipment by id
      *
      * @param string|int $id The id of the equipment to get
@@ -96,20 +118,25 @@ class EquipmentsController extends AppController
     {
         $equipment = $this->Equipments->get($id, [
             'contain' => [
-                'Stores',
                 'Categories',
-                'Maintenances',
-                'Manufacturers',
-                'Files',
+                'Locations'
             ],
         ]);
+
+        $completed_maintenance_count = $this->Equipments->Maintenances->MaintenanceSessionsMaintenances
+            ->find()
+            ->innerJoinWith('Maintenances.Equipments', function (Query $query) use ($id) {
+                return $query->where(['Equipments.id' => $id]);
+            })
+            ->where(['status' => 1])
+            ->count();
 
         $repair_count = $this->Equipments->Repairs
             ->find()
             ->where(['Repairs.equipment_id' => $id, 'Repairs.status' => 'Completed'])
             ->count();
 
-        $this->set(compact('equipment', 'repair_count'));
+        $this->set(compact('equipment', 'repair_count', 'completed_maintenance_count'));
     }
 
     /**
