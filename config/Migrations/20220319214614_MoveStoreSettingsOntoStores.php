@@ -28,7 +28,9 @@ class MoveStoreSettingsOntoStores extends AbstractMigration
         $table->addColumn('upcoming_cars_offset', 'integer', [
             'default' => 2000
         ]);
-        $table->addColumn('time_zone', 'string');
+        $table->addColumn('time_zone', 'string', [
+            'default' => 'American/Chicago'
+        ]);
         $table->addColumn('require_scan', 'boolean', [
             'default' => 0
         ]);

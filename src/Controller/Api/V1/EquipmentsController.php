@@ -40,7 +40,7 @@ class EquipmentsController extends AppController
         $this->getRequest()->allowMethod(['GET']);
         $equipment = $this->Equipments->find();
 
-        if ($store_id === 'undefined') {
+        if (!$store_id) {
             $equipment = $this->Equipments->find()->matching('Stores', function (Query $query) {
                 return $query->matching('Users', function (Query $query) {
                     return $query->where(['Users.id' => $this->Authentication->getUser()->id]);

@@ -153,7 +153,7 @@ class InventoriesController extends AppController
     public function dashboardWidget($store_id = null)
     {
         $query = $this->Inventories->find();
-        if ($store_id === 'undefined') {
+        if (!$store_id) {
             $query->innerJoinWith('Stores.Users', function (Query $query) {
                 return $query->where(['Users.id' => $this->Authentication->getUser()->id]);
             });

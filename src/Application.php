@@ -16,6 +16,7 @@
 namespace App;
 
 use App\Middleware\CompanyMiddleware;
+use App\Middleware\ConvertGetRequestParams;
 use Authentication\AuthenticationService;
 use Authentication\AuthenticationServiceInterface;
 use Authentication\AuthenticationServiceProviderInterface;
@@ -98,7 +99,8 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             ->add(new AuthorizationMiddleware($this, [
                 'requireAuthorizationCheck' => false,
             ]))
-            ->add(new CompanyMiddleware());
+            ->add(new CompanyMiddleware())
+            ->add(new ConvertGetRequestParams());
 
         return $middlewareQueue;
     }

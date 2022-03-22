@@ -316,6 +316,7 @@ class RepairsTable extends Table
         return $q->contain([
             'Stores' => [
                 'fields' => [
+                    'Stores.id',
                     'Stores.name',
                     'Stores.file_id',
                 ],
