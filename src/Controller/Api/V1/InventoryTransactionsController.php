@@ -232,9 +232,6 @@ class InventoryTransactionsController extends AppController
             ->contain(
                 [
                 'Stores',
-                'Completedmaintenances' => [
-                    'Maintenances',
-                ],
                 ]
             )
             ->order(['Inventoryuses.created' => 'DESC']);

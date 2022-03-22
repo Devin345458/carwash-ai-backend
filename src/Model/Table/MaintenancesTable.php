@@ -109,10 +109,6 @@ class MaintenancesTable extends Table
 
         $this->hasMany('MaintenanceSessionsMaintenances');
 
-        $this->hasMany('InventoryTransactions', [
-            'through' => 'CompletedMaintenances',
-        ]);
-
         $this->hasMany('ActivityLogs')
             ->setConditions(['object_model' => 'Maintenances'])
             ->setForeignKey('foreign_key')
@@ -281,16 +277,7 @@ class MaintenancesTable extends Table
                     'Items.Inventories' => function (Query $q) use ($store_id) {
                         return $q->where(['Inventories.store_id' => $store_id]);
                     },
-                    'Equipments.Locations',
-                    'CompletedMaintenances' => function (Query $q) use ($user_id) {
-                        return $q->select([
-                            'maintenance_id',
-                            'best_time' => $q->func()->min('time_to_complete'),
-                            'personal_best' => $q->func()->min('time_to_complete'),
-                        ])
-                            ->where(['CompletedMaintenances.completed_by_id =' => $user_id])
-                            ->group('maintenance_id');
-                    },
+                    'Equipments.Locations'
                 ]
 
             ]);

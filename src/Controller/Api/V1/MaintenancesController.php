@@ -6,21 +6,17 @@ use App\Controller\Component\InventoryComponent;
 use App\Error\Exception\ValidationException;
 use App\Model\Entity\Equipment;
 use App\Model\Entity\Maintenance;
-use App\Model\Table\CompletedMaintenancesTable;
 use App\Model\Table\MaintenancesTable;
 use App\Model\Table\SuppliersTable;
-use Cake\Collection\Collection;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Datasource\ResultSetInterface;
 use Cake\ORM\Query;
-use Exception;
 
 /**
  * Maintenances Controller
  *
  * @property MaintenancesTable $Maintenances
  * @property SuppliersTable $Suppliers
- * @property CompletedMaintenancesTable completeMaintenance
  * @property InventoryComponent Inventory
  * @method   Maintenance[]|ResultSetInterface paginate($object = null, array $settings = [])
  */
@@ -126,17 +122,6 @@ class MaintenancesController extends AppController
             'dueMaintenance' => count($dueMaintenance),
             'upcomingMaintenance' => count($upcomingMaintenance),
         ]);
-    }
-
-    public function completeMaintenance()
-    {
-        $data = $this->getRequest()->getData();
-        $completed_maintenance = $data['completed_maintenance'];
-        $order = $data['order'];
-        $this->Maintenances->CompletedMaintenances->completeMaintenance($completed_maintenance, $this->Auth->user());
-        $order = $this->Maintenances->Stores->Orders->newEntity($order);
-        $this->Maintenances->Stores->Orders->save($order);
-        $this->set(['success' => true]);
     }
 
     public function getMaintenance($id)

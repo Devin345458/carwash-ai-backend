@@ -108,11 +108,6 @@ class ActivityLogsTable extends Table
             'conditions' => ['object_model' => 'Maintenances'],
         ]);
 
-        $this->belongsTo('CompletedMaintenances', [
-            'foreignKey' => 'object_id',
-            'conditions' => ['object_model' => 'CompletedMaintenances'],
-        ]);
-
         $this->belongsTo('Inventories', [
             'foreignKey' => 'object_id',
             'conditions' => ['object_model' => 'Inventories'],

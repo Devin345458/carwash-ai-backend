@@ -109,15 +109,6 @@ class MaintenanceSessionsMaintenancesTable extends Table
         }
     }
 
-    public function findOverage(Query $q, array $option)
-    {
-        $maintenance = $q->select(['difference' => 'CompletedMaintenances.time_to_complete - Maintenances.expected_duration'])->contain(['Maintenances']);
-        $maintenance->select($this);
-        $maintenance->select($this->Maintenances);
-
-        return $maintenance->select($this->CreatedBy);
-    }
-
     public function findCost(Query $q, array $options)
     {
         $q->contain(

@@ -25,7 +25,6 @@ class CommentsControllerTest extends TestCase
         'app.Comments',
         'app.CreatedBy',
         'app.ModifiedBy',
-        'app.CompletedMaintenances',
         'app.Equipments',
         'app.Repairs',
         'app.ActivityLogs',

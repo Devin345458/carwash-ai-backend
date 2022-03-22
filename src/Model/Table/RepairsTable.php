@@ -32,7 +32,6 @@ use Pusher\PusherException;
  *
  * @property UsersTable|BelongsTo $Users
  * @property StoresTable|BelongsTo $Stores
- * @property CompletedMaintenancesTable|BelongsTo $CompletedMaintenances
  * @property EquipmentsTable|BelongsTo $Equipments
  * @property SubtasksTable|HasMany $Subtasks
  * @property CommentsTable|HasMany $Comments
@@ -57,7 +56,6 @@ class RepairsTable extends Table
         'Comments' => ['CreatedBy.Files'],
         'CreatedBy',
         'AssignedBy.Files',
-        'CompletedMaintenances.Maintenances',
         'Equipments',
         'AssignedTo.Files',
         'Subtasks.AssignedTo',
@@ -126,15 +124,6 @@ class RepairsTable extends Table
             'Subtasks',
             [
                 'foreignKey' => 'repair_id',
-            ]
-        );
-
-        $this->belongsTo(
-            'CompletedMaintenances',
-            [
-                'foreignKey' => 'maintenance_id',
-                'targetForeignKey' => 'id',
-                'joinTable' => 'LEFT',
             ]
         );
 
@@ -254,7 +243,6 @@ class RepairsTable extends Table
         $rules->add($rules->existsIn(['assigned_by'], 'AssignedBy'));
         $rules->add($rules->existsIn(['store_id'], 'Stores'));
         $rules->add($rules->existsIn(['equipment_id'], 'Equipments'));
-        $rules->add($rules->existsIn(['maintenance_id'], 'CompletedMaintenances'));
         $rules->add($rules->existsIn(['repair_id'], 'associated_repair'));
 
         return $rules;
@@ -383,17 +371,6 @@ class RepairsTable extends Table
                         'fields' => [
                             'Files.id',
                             'Files.name',
-                        ],
-                    ],
-                ],
-                'CompletedMaintenances' => [
-                    'fields' => [
-                        'CompletedMaintenances.completed_date',
-                        'CompletedMaintenances.maintenance_id',
-                    ],
-                    'Maintenances' => [
-                        'fields' => [
-                            'Maintenances.name',
                         ],
                     ],
                 ],

@@ -27,7 +27,6 @@ class UsersControllerTest extends TestCase
         'app.Stores',
         'app.ActiveStoreModel',
         'app.Repairs',
-        'app.CompletedMaintenances',
         'app.Maintenances',
         'app.MyuserDevices',
         'app.UsersStores',

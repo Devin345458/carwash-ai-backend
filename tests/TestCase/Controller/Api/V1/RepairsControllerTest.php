@@ -32,7 +32,6 @@ class RepairsControllerTest extends TestCase
         'app.Stores',
         'app.Maintenances',
         'app.Equipments',
-        'app.CompletedMaintenances',
         'app.Items',
         'app.ActivityLogs',
         'app.RepairReminders',

@@ -25,7 +25,6 @@ class MaintenancesTableTest extends TestCase
     public $fixtures = [
         'app.maintenances',
         'app.equipments',
-        'app.completedmaintenances',
         'app.steps',
         'app.consumables',
         'app.parts',
