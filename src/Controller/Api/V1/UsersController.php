@@ -142,7 +142,7 @@ class UsersController extends AppController
             throw new UnauthenticatedException('Incorrect Current Password');
         }
         $user = $this->Authentication->getUser();
-        $user->set('password', $data['new_password']);
+        $user->password = $data['password'];
         if (!$this->Users->save($user)) {
             throw new ValidationException($user);
         }

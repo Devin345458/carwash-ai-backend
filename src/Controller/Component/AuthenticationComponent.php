@@ -22,9 +22,6 @@ class AuthenticationComponent extends Authentication
     {
         $user = $this->getController()->getTableLocator()->get('Users')->get($user_id);
         $this->getController()->Authorization->authorize($user, 'canLoginAs');
-        if (!$user) {
-            throw new NotFoundException();
-        }
         $user['_adfAuthentication']['login_as'] = true;
         $this->setIdentity($user);
 
