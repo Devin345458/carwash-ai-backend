@@ -56,11 +56,4 @@ nbproject/*
 # Sass preprocessor
 .sass-cache/
 
-
-#  Vue Files    #
-#################
-*.gz
-package-lock.json
-log.out
-*.hot-update.json
 storage
