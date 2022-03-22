@@ -33,7 +33,6 @@ use Pusher\PusherException;
  * @property UsersTable|BelongsTo $Users
  * @property StoresTable|BelongsTo $Stores
  * @property EquipmentsTable|BelongsTo $Equipments
- * @property SubtasksTable|HasMany $Subtasks
  * @property CommentsTable|HasMany $Comments
  * @property ActivityLogsTable|HasMany $ActivityLogs
  * @property FilesTable|BelongsToMany Files
@@ -58,7 +57,6 @@ class RepairsTable extends Table
         'AssignedBy.Files',
         'Equipments',
         'AssignedTo.Files',
-        'Subtasks.AssignedTo',
         'RepairReminders',
         'Items' => ['Inventories', 'Files'],
         'Files',
@@ -88,7 +86,6 @@ class RepairsTable extends Table
             ->setForeignKey('commentable_id')
             ->setBindingKey('id');
 
-        $this->hasMany('Subtasks');
 
         $this->belongsTo(
             'AssignedTo',
@@ -117,13 +114,6 @@ class RepairsTable extends Table
             [
                 'foreignKey' => 'equipment_id',
                 'joinType' => 'LEFT',
-            ]
-        );
-
-        $this->hasMany(
-            'Subtasks',
-            [
-                'foreignKey' => 'repair_id',
             ]
         );
 
@@ -396,20 +386,6 @@ class RepairsTable extends Table
                         'fields' => [
                             'Files.id',
                             'Files.name',
-                        ],
-                    ],
-                ],
-                'Subtasks' => [
-                    'fields' => [
-                        'Subtasks.assigned_to_id',
-                        'Subtasks.content',
-                        'Subtasks.repair_id',
-                    ],
-                    'AssignedTo' => [
-                        'fields' => [
-                            'AssignedTo.first_name',
-                            'AssignedTo.last_name',
-                            'AssignedTo.file_id',
                         ],
                     ],
                 ],
