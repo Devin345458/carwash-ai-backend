@@ -10,6 +10,7 @@ use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Datasource\ResultSetInterface;
 use Cake\Http\Response;
 use Cake\I18n\FrozenDate;
+use Cake\I18n\FrozenTime;
 use Cake\I18n\Time;
 use Cake\ORM\Query;
 
@@ -60,11 +61,16 @@ class RepairsController extends AppController
 
     public function view($id)
     {
-        /** @var Repair $repair */
-        $repair = $this->Repairs->find('repair', ['id' => $id])->first();
-        foreach ($repair->items as &$item) {
-            $item->setStoreInventory($repair->store_id);
-        }
+        $repair = $this->Repairs->get($id, [
+            'contain' => [
+                'CreatedBy' => [
+                    'fields' => [
+                        'CreatedBy.first_name',
+                        'CreatedBy.last_name',
+                    ],
+                ]
+            ]
+        ]);
         $this->set(compact('repair'));
     }
 
@@ -77,25 +83,22 @@ class RepairsController extends AppController
     {
         $this->getRequest()->allowMethod('POST');
 
-        $repair = $this->Repairs->find('repair', ['id' => $id])->first();
+        $repair = $this->Repairs->get($id);
 
-        $changes = $this->getRequest()->getData('changes');
+        $field = $this->getRequest()->getData('field');
+        $value = $this->getRequest()->getData('value');
 
-        foreach ($changes as $field => $change) {
-            if ($field === 'due_date') {
-                $repair[$field] = new Time($change['current']);
-            } else {
-                $repair[$field] = $change['current'];
-            }
+        if ($field === 'due_date') {
+            $repair[$field] = new FrozenTime($value);
+        } else {
+            $repair[$field] = $value;
         }
 
-        if (
-            !$this->Repairs->save($repair, [
-            'associated' => $this->Repairs->repair_association,
-            ])
-        ) {
+        if (!$this->Repairs->save($repair)) {
             throw new ValidationException($repair);
         }
+
+        $repair = $this->Repairs->find('repairs')->where(['Repairs.id' => $id])->first();
 
         $this->set(compact('repair'));
     }

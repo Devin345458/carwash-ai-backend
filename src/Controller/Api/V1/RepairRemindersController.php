@@ -3,6 +3,8 @@ namespace App\Controller\Api\V1;
 
 use App\Controller\AppController;
 use App\Error\Exception\ValidationException;
+use App\Model\Entity\RepairReminder;
+use Cake\I18n\FrozenTime;
 
 /**
  * RepairReminders Controller
@@ -33,21 +35,34 @@ class RepairRemindersController extends AppController
      *   ),
      *  )
      *
-     * @return \Cake\Http\Response|null Redirects on successful add, renders view otherwise.
+     * @return void Redirects on successful add, renders view otherwise.
      */
     public function upsert()
     {
         $this->getRequest()->allowMethod(['post']);
-        if ($this->getRequest()->getData('id')) {
-            $reminder = $this->RepairReminders->get($this->getRequest()->getData('id'));
-            $reminder = $this->RepairReminders->patchEntity($reminder, $this->getRequest()->getData());
-        } else {
-            $reminder = $this->RepairReminders->newEntity($this->getRequest()->getData());
-            $reminder->user_id = $this->Authentication->getUser()->id;
-        }
+        $reminder = $this->RepairReminders->findOrCreate([
+            'repair_id' => $this->getRequest()->getData('id'),
+            'user_id' => $this->Authentication->getUser()->id
+        ], function (RepairReminder $reminder) {
+            $reminder->reminder = new FrozenTime($this->getRequest()->getData('reminder'));
+        });
+
+        $reminder->reminder = new FrozenTime($this->getRequest()->getData('reminder'));
+
         if (!$this->RepairReminders->save($reminder)) {
             throw new ValidationException($reminder);
         }
+        $this->set(compact('reminder'));
+    }
+
+    public function getReminder($id)
+    {
+        $this->getRequest()->allowMethod(['get']);
+        $reminder = $this->RepairReminders->find()->where([
+            'repair_id' => $id,
+            'user_id' => $this->Authentication->getUser()->id
+        ])->first();
+
         $this->set(compact('reminder'));
     }
 }

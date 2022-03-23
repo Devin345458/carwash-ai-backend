@@ -94,7 +94,7 @@ class File extends Entity
             return null;
         }
         if ($this->get('name') && is_scalar($this->get('name'))) {
-            return env('S3_PUBLIC_URL') . '/' . env('S3_BUCKET') . '/' . $this->get('name');
+            return env('S3_PUBLIC_URL') . '/' . $this->get('name');
         } else {
             return null;
         }
