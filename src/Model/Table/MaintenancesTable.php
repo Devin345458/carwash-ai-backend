@@ -10,6 +10,7 @@ use ArrayObject;
 use Cake\Datasource\EntityInterface;
 use Cake\Event\Event;
 use Cake\I18n\Date;
+use Cake\I18n\FrozenDate;
 use Cake\I18n\FrozenTime;
 use Cake\I18n\Time;
 use Cake\ORM\Association\BelongsTo;
@@ -314,13 +315,13 @@ class MaintenancesTable extends Table
                 $where['OR']['Maintenances.last_cars_completed + frequency_cars <='] = $store->current_car_count + $store->maintenance_due_cars_offset;
                 $where['OR']['Maintenances.last_cars_completed'] = 0;
             }
-            $where['OR']['DATE_ADD(Maintenances.last_completed_date, INTERVAL frequency_days DAY)  <='] = (new FrozenTime())->addDay($store->maintenance_due_days_offset);
+            $where['OR']['DATE_ADD(Maintenances.last_completed_date, INTERVAL frequency_days DAY)  <='] = (new FrozenDate())->addDay($store->maintenance_due_days_offset);
             $where['OR']['Maintenances.last_completed_date IS'] = null;
         } else {
             if ($store->allow_car_counts) {
                 $where['OR']['Maintenances.last_cars_completed + frequency_cars >'] = $store->current_car_count + $store->maintenance_due_cars_offset;
             }
-            $where['OR']['DATE_ADD(Maintenances.last_completed_date, INTERVAL frequency_days DAY)  >'] = (new FrozenTime())->addDay($store->maintenance_due_days_offset);
+            $where['OR']['DATE_ADD(Maintenances.last_completed_date, INTERVAL frequency_days DAY)  >'] = (new FrozenDate())->addDay($store->maintenance_due_days_offset);
         }
         $q->where($where);
 
