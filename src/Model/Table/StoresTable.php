@@ -45,6 +45,9 @@ class StoresTable extends Table
 {
     use LocatorAwareTrait;
 
+    public const STORE = 1;
+    public const WAREHOUSE = 2;
+
     /**
      * Initialize method
      *
@@ -62,8 +65,6 @@ class StoresTable extends Table
         $this->addBehavior('Timestamp');
 
         $this->belongsTo('Companies');
-
-        $this->belongsTo('StoreTypes');
 
         $this->hasMany('Consumables', [
             'foreignKey' => 'store_id',
@@ -140,7 +141,6 @@ class StoresTable extends Table
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         $rules->add($rules->existsIn(['company_id'], 'Companies'));
-        $rules->add($rules->existsIn(['store_type_id'], 'StoreTypes'));
 
         return $rules;
     }

@@ -24,7 +24,6 @@ class StoresControllerTest extends TestCase
     protected $fixtures = [
         'app.Stores',
         'app.Companies',
-        'app.StoreTypes',
         'app.Consumables',
         'app.Equipments',
         'app.Repairs',

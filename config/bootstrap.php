@@ -175,6 +175,7 @@ Type::build('datetime');
 Type::build('timestamp');
 
 FrozenDate::setToStringFormat('yyyy-MM-dd');
+FrozenTime::setToStringFormat('yyyy-MM-dd H:mm:s');
 
 
 Type::map('json', 'Cake\Database\Type\JsonType');

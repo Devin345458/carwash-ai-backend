@@ -80,6 +80,11 @@ class EquipmentsController extends AppController
     {
         $this->getRequest()->allowMethod('POST');
         $equipment = $this->Equipments->newEntity($this->getRequest()->getData());
+        $defaultLocation = $this->Equipments->Locations->find()->where([
+            'store_id' => $equipment->store_id,
+            'default_location' => true
+        ])->firstOrFail();
+        $equipment->location_id = $defaultLocation->id;
         if (!$this->Equipments->save($equipment)) {
             throw new ValidationException($equipment);
         }
