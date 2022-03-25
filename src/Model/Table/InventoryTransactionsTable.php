@@ -104,8 +104,6 @@ class InventoryTransactionsTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->existsIn(['transaction_action_id'], 'TransactionActions'));
-
         return $rules;
     }
 
