@@ -5,6 +5,8 @@ use App\Controller\AppController;
 use App\Error\Exception\ValidationException;
 use App\Model\Entity\Item;
 use App\Model\Entity\Repair;
+use App\Model\Table\ActivityLogsTable;
+use App\Model\Table\ItemsRepairsTable;
 use App\Model\Table\RepairsTable;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Datasource\ResultSetInterface;
@@ -63,6 +65,8 @@ class RepairsController extends AppController
     {
         $repair = $this->Repairs->get($id, [
             'contain' => [
+                'Items.ActiveStoreInventories',
+                'Files',
                 'CreatedBy' => [
                     'fields' => [
                         'CreatedBy.first_name',
@@ -83,16 +87,20 @@ class RepairsController extends AppController
     {
         $this->getRequest()->allowMethod('POST');
 
-        $repair = $this->Repairs->get($id);
+        $repair = $this->Repairs->get($id, [
+            'contain' => [
+                'Files',
+                'Items.ActiveStoreInventories',
+            ]
+        ]);
 
         $field = $this->getRequest()->getData('field');
         $value = $this->getRequest()->getData('value');
 
         if ($field === 'due_date') {
-            $repair[$field] = new FrozenTime($value);
-        } else {
-            $repair[$field] = $value;
+            $value = new FrozenTime($value);
         }
+        $this->Repairs->patchEntity($repair, [$field => $value]);
 
         if (!$this->Repairs->save($repair)) {
             throw new ValidationException($repair);
@@ -145,5 +153,123 @@ class RepairsController extends AppController
         $upcoming = $this->Repairs->find('dashboard')->where(['due_date >' => $date, 'due_date <' => $upcoming_date]);
 
         $this->set(compact('due', 'overdue', 'upcoming'));
+    }
+
+    /**
+     * Retrieve all activities on the equipment
+     *
+     * @param int|string $id The id of the equipment to get activities for
+     * @return void
+     */
+    public function activities($id)
+    {
+        $this->getRequest()->allowMethod(['JSON', 'GET']);
+
+        /** @var ActivityLogsTable $activityLogs */
+        $activityLogs = $this->getTableLocator()->get('ActivityLogs');
+
+        $repairActivity = $activityLogs->find()
+            ->where(['ActivityLogs.scope_model' => 'Repairs'])
+            ->innerJoinWith('Repairs', function (Query $query) use ($id) {
+                return $query->where(['Repairs.equipment_id' => $id]);
+            })
+            ->select([
+                'id' => 'ActivityLogs.id',
+                'created_at' => 'ActivityLogs.created_at',
+                'scope_model' => 'ActivityLogs.scope_model',
+                'scope_id' => 'ActivityLogs.scope_id',
+                'issuer_model' => 'ActivityLogs.issuer_model',
+                'issuer_id' => 'ActivityLogs.issuer_id',
+                'object_model' => 'ActivityLogs.object_model',
+                'object_id' => 'ActivityLogs.object_id',
+                'level' => 'ActivityLogs.level',
+                'action' => 'ActivityLogs.action',
+                'message' => 'ActivityLogs.message',
+                'data' => 'ActivityLogs.data',
+            ]);
+
+        $comments = $activityLogs->find()
+            ->where(['ActivityLogs.scope_model' => 'Comments'])
+            ->innerJoinWith('Comments', function (Query $query) use ($id) {
+                return $query->where([
+                    'Comments.commentable_id = ' => $id,
+                    'Comments.commentable_type' => 'Repairs'
+                ]);
+            })
+            ->select([
+                'id' => 'ActivityLogs.id',
+                'created_at' => 'ActivityLogs.created_at',
+                'scope_model' => 'ActivityLogs.scope_model',
+                'scope_id' => 'ActivityLogs.scope_id',
+                'issuer_model' => 'ActivityLogs.issuer_model',
+                'issuer_id' => 'ActivityLogs.issuer_id',
+                'object_model' => 'ActivityLogs.object_model',
+                'object_id' => 'ActivityLogs.object_id',
+                'level' => 'ActivityLogs.level',
+                'action' => 'ActivityLogs.action',
+                'message' => 'ActivityLogs.message',
+                'data' => 'ActivityLogs.data',
+            ]);
+
+        $items = $activityLogs->find()
+            ->where(['ActivityLogs.scope_model' => 'ItemsRepairs'])
+            ->innerJoinWith('ItemsRepairs', function (Query $query) use ($id) {
+                return $query->where([
+                    'ItemsRepairs.repair_id' => $id
+                ]);
+            })
+            ->select([
+                'id' => 'ActivityLogs.id',
+                'created_at' => 'ActivityLogs.created_at',
+                'scope_model' => 'ActivityLogs.scope_model',
+                'scope_id' => 'ActivityLogs.scope_id',
+                'issuer_model' => 'ActivityLogs.issuer_model',
+                'issuer_id' => 'ActivityLogs.issuer_id',
+                'object_model' => 'ActivityLogs.object_model',
+                'object_id' => 'ActivityLogs.object_id',
+                'level' => 'ActivityLogs.level',
+                'action' => 'ActivityLogs.action',
+                'message' => 'ActivityLogs.message',
+                'data' => 'ActivityLogs.data',
+            ]);
+
+
+
+        $activity_logs = $repairActivity
+            ->union($items)
+            ->union($comments);
+
+
+        $activityLogs = $activityLogs
+            ->find()
+            ->from([
+                $activityLogs->getAlias() => $activity_logs
+            ])
+            ->contain(['Users'])
+            ->select([
+                'Users.id',
+                'Users.first_name',
+                'Users.last_name',
+                'Users.file_id',
+                'ActivityLogs.id',
+                'ActivityLogs.message',
+                'ActivityLogs.issuer_id',
+                'ActivityLogs.object_model',
+                'ActivityLogs.created_at',
+                'ActivityLogs.data',
+                'ActivityLogs.action',
+            ])
+            ->order(['ActivityLogs.created_at' => 'DESC']);
+
+        $this->set(['activity_logs' => $this->paginate($activityLogs)]);
+    }
+
+    public function deleteItemFromRepair($id, $itemId) {
+        /** @var ItemsRepairsTable $itemsRepairsTable */
+        $itemsRepairsTable = $this->getTableLocator()->get('ItemsRepairs');
+        $itemRepair = $itemsRepairsTable->find()->where(['repair_id' => $id, 'item_id' => $itemId])->firstOrFail();
+        if (!$itemsRepairsTable->delete($itemRepair)) {
+            throw new ValidationException($itemRepair);
+        }
     }
 }

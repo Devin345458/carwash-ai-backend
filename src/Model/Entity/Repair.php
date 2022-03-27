@@ -1,6 +1,7 @@
 <?php
 namespace App\Model\Entity;
 
+use App\Classes\ActivityLoggableInterface;
 use Aws\S3\S3Client;
 use Cake\Core\Configure;
 use Cake\I18n\FrozenTime;
@@ -41,7 +42,7 @@ use Cake\ORM\Entity;
  * @property File[] $files
  * @property Comment[] $comments
  */
-class Repair extends Entity
+class Repair extends Entity implements ActivityLoggableInterface
 {
     /**
      * Fields that can be mass assigned using newEntity() or patchEntity().
@@ -55,4 +56,18 @@ class Repair extends Entity
     protected $_accessible = [
         '*' => true,
     ];
+
+    public function getMessage($user, string $action): string
+    {
+        switch ($action) {
+            case 'created':
+                return $user->full_name . ' created ' . $this->name;
+            case 'updated':
+                return $user->full_name . ' edited ' . $this->name;
+            case 'deleted':
+                return $user->full_name . ' deleted ' . $this->name;
+            default:
+                return 'No Details';
+        }
+    }
 }

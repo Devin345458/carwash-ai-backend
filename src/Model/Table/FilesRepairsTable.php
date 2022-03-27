@@ -5,6 +5,7 @@ use App\Model\Entity\FilesRepair;
 use ArrayObject;
 use Cake\Datasource\EntityInterface;
 use Cake\Event\Event;
+use Cake\Event\EventInterface;
 use Cake\ORM\Association\BelongsTo;
 use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
@@ -14,7 +15,7 @@ use Cake\Validation\Validator;
 /**
  * PhotosRepairs Model
  *
- * @property FilesTable|BelongsTo $Photos
+ * @property FilesTable|BelongsTo $Files
  * @property RepairsTable|BelongsTo $Repairs
  * @method FilesRepair get($primaryKey, $options = [])
  * @method FilesRepair newEntity($data = null, array $options = [])
@@ -41,20 +42,14 @@ class FilesRepairsTable extends Table
         $this->setDisplayField('id');
         $this->setPrimaryKey('id');
 
-        $this->belongsTo(
-            'Files',
-            [
+        $this->belongsTo('Files', [
             'foreignKey' => 'file_id',
             'joinType' => 'INNER',
-            ]
-        );
-        $this->belongsTo(
-            'Repairs',
-            [
+        ]);
+        $this->belongsTo('Repairs', [
             'foreignKey' => 'repair_id',
             'joinType' => 'INNER',
-            ]
-        );
+        ]);
     }
 
     /**
@@ -95,6 +90,16 @@ class FilesRepairsTable extends Table
     {
         if (isset($data['cover'])) {
             $data['cover'] = filter_var($data['cover'], FILTER_VALIDATE_BOOLEAN);
+        }
+    }
+
+    public function beforeSave(EventInterface $event, FilesRepair $entity, ArrayObject $options) {
+        $count = $this->find()
+            ->where(['repair_id' => $entity->repair_id])
+            ->count();
+
+        if ($count === 0) {
+            $entity->cover = true;
         }
     }
 }

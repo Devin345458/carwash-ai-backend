@@ -9,7 +9,7 @@ use Cake\ORM\Entity;
  * @property int $id
  * @property int $file_id
  * @property int $repair_id
- * @property bool $primary
+ * @property bool $cover
  *
  * @property File $photo
  * @property Repair $repair

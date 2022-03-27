@@ -1,6 +1,7 @@
 <?php
 namespace App\Model\Entity;
 
+use App\Classes\ActivityLoggableInterface;
 use Cake\I18n\FrozenTime;
 use Cake\ORM\Entity;
 
@@ -9,14 +10,17 @@ use Cake\ORM\Entity;
  *
  * @property int $id
  * @property string $content
- * @property string $myuser_id
+ * @property string $created_by_id
+ * @property string $modified_by_id
+ * @property int commentable_id
+ * @property string commentable_type
  * @property FrozenTime $created
  * @property FrozenTime $modified
  * @property int $repair_id
  *
- * @property Myuser $myuser
+ * @property User $user
  */
-class Comment extends Entity
+class Comment extends Entity implements ActivityLoggableInterface
 {
     /**
      * Fields that can be mass assigned using newEntity() or patchEntity().
@@ -29,11 +33,26 @@ class Comment extends Entity
      */
     protected $_accessible = [
         'content' => true,
-        'myuser_id' => true,
-        'created' => true,
-        'modified' => true,
         'commentable_id' => true,
         'commentable_type' => true,
-        'myuser' => true,
+        'created' => true,
+        'modified' => true,
+        'created_by_id' => true,
+        'modified_by_id' => true,
+        'created_by' => true,
+        'modified_by' => true,
     ];
+
+
+    public function getMessage($user, string $action): string
+    {
+        switch ($action) {
+            case 'created':
+                return $user->full_name . ' made a comment "' . $this->content .'"';
+            case 'deleted':
+                return $user->full_name . ' deleted a comment "' . $this->content .'"';
+            default:
+                return 'No Details';
+        }
+    }
 }

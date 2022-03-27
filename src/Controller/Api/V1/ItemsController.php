@@ -44,8 +44,6 @@ class ItemsController extends AppController
         }
 
 
-
-
         $this->set(compact('items'));
     }
 

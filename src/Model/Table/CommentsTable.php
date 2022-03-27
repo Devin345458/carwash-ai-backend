@@ -1,11 +1,11 @@
 <?php
 namespace App\Model\Table;
 
+use App\Model\Behavior\WhoDidItBehavior;
 use App\Model\Entity\Comment;
 use Cake\Datasource\EntityInterface;
 use Cake\ORM\Association\BelongsTo;
 use Cake\ORM\Behavior\TimestampBehavior;
-use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -24,6 +24,7 @@ use Cake\Validation\Validator;
  * @method Comment[] patchEntities($entities, array $data, array $options = [])
  * @method Comment findOrCreate($search, callable $callback = null, $options = [])
  * @mixin TimestampBehavior
+ * @mixin WhoDidItBehavior
  */
 class CommentsTable extends Table
 {

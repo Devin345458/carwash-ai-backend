@@ -1,6 +1,7 @@
 <?php
 namespace App\Model\Table;
 
+use App\Classes\ActivityLoggableInterface;
 use App\Error\Exception\ValidationException;
 use App\Model\Entity\ActivityLog;
 use ArrayObject;
@@ -41,11 +42,10 @@ class ActivityLogsTable extends Table
 {
     use LocatorAwareTrait;
 
-    protected $_exclude_logging = [
-        'DebugKit\Model\Entity\Panel',
-        'DebugKit\Model\Entity\Request',
-        'Cake\ORM\Entity',
-        'App\Model\Entity\ActivityLog',
+
+    private $_excludeFields = [
+        'modified_by_id',
+        'modified',
     ];
 
     /**
@@ -90,32 +90,32 @@ class ActivityLogsTable extends Table
 
         $this->belongsTo('Comments', [
             'foreignKey' => 'object_id',
-            'conditions' => ['object_model' => 'Comments'],
+            'conditions' => ['scope_model' => 'Comments'],
         ]);
 
         $this->belongsTo('Repairs', [
             'foreignKey' => 'object_id',
-            'conditions' => ['object_model' => 'Repairs'],
+            'conditions' => ['scope_model' => 'Repairs'],
         ]);
 
         $this->belongsTo('Equipments', [
             'foreignKey' => 'object_id',
-            'conditions' => ['object_model' => 'Equipments'],
+            'conditions' => ['scope_model' => 'Equipments'],
         ]);
 
         $this->belongsTo('Maintenances', [
             'foreignKey' => 'object_id',
-            'conditions' => ['object_model' => 'Maintenances'],
+            'conditions' => ['scope_model' => 'Maintenances'],
         ]);
 
-        $this->belongsTo('Inventories', [
+        $this->belongsTo('ItemsRepairs', [
             'foreignKey' => 'object_id',
-            'conditions' => ['object_model' => 'Inventories'],
+            'conditions' => ['scope_model' => 'ItemsRepairs'],
         ]);
 
-        $this->belongsTo('Completedinventorys', [
+        $this->belongsTo('MaintenanceSessionsMaintenances', [
             'foreignKey' => 'object_id',
-            'conditions' => ['object_model' => 'Completedinventorys'],
+            'conditions' => ['scope_model' => 'MaintenanceSessionsMaintenances'],
         ]);
     }
 
@@ -196,10 +196,8 @@ class ActivityLogsTable extends Table
      */
     public function logActivity(EventInterface $event, EntityInterface $entity, ArrayObject $options): void
     {
-        if (!Router::getRequest()) {
-            return;
-        }
-        if (in_array(get_class($entity), $this->_exclude_logging)) {
+
+        if (!$entity instanceof ActivityLoggableInterface) {
             return;
         }
 
@@ -220,7 +218,7 @@ class ActivityLogsTable extends Table
             'issuer_id' => $user_id,
             'object_model' => Inflector::singularize($table->getRegistryAlias()),
             'object_id' => $entity->get($table->getPrimaryKey()),
-            'level' => LogLevel::INFO,
+            'level' => LogLevel::INFO
         ]);
 
         if ($event->getName() === 'Model.afterSave') {
@@ -235,6 +233,9 @@ class ActivityLogsTable extends Table
             return;
         }
 
+        if (!count($activity->data['changes'])) {
+            return;
+        }
         if (!$this->save($activity)) {
             throw new ValidationException($activity);
         }
@@ -243,49 +244,52 @@ class ActivityLogsTable extends Table
     /**
      * Log a entity being created
      *
-     * @param EntityInterface $entity Entity
+     * @param EntityInterface|ActivityLoggableInterface $entity Entity
      * @param ActivityLog $activity Activity Entity
      * @return void
      */
-    public function logCreate(EntityInterface $entity, ActivityLog $activity): void
+    public function logCreate($entity, ActivityLog $activity): void
     {
-        $activity->data = ['entity' => $entity->toArray()];
-        $activity->message = Router::getRequest()->getAttribute('identity')->full_name . ' created a new ' . $entity->getSource();
+        $activity->data = ['changes' => $entity->toArray()];
+        $activity->message = $entity->getMessage(Router::getRequest()->getAttribute('identity'), 'created');
         $activity->action = 'created';
     }
 
     /**
      * Log a entity being updated
      *
-     * @param EntityInterface $entity Entity
+     * @param EntityInterface|ActivityLoggableInterface $entity Entity
      * @param ActivityLog $activity Activity Entity
      * @return void
      */
-    public function logUpdate(EntityInterface $entity, ActivityLog $activity): void
+    public function logUpdate($entity, ActivityLog $activity): void
     {
-        $data['entity'] = $entity->toArray();
+        $data = [];
         foreach ($entity->extract($entity->getVisible(), true) as $field => $value) {
-            $data['changed'][] = [
+            if ($value === $entity->getOriginal($field)) continue;
+            if (in_array($field, $this->_excludeFields)) continue;
+            $data['changes'][] = [
                 'field' => $field,
-                'value' => $value,
+                'before' => $entity->getOriginal($field),
+                'after' => $value,
             ];
         }
         $activity->data = $data;
-        $activity->message = Router::getRequest()->getAttribute('identity')->full_name . ' update a new ' . $entity->getSource();
+        $activity->message = $entity->getMessage(Router::getRequest()->getAttribute('identity'), 'updated');
         $activity->action = 'updated';
     }
 
     /**
      * Log a entity being deleted
      *
-     * @param EntityInterface $entity Entity
+     * @param EntityInterface|ActivityLoggableInterface $entity Entity
      * @param ActivityLog $activity Activity Entity
      * @return void
      */
     public function logDelete(EntityInterface $entity, ActivityLog $activity): void
     {
-        $activity->data = ['entity' => $entity->toArray()];
-        $activity->message = Router::getRequest()->getAttribute('identity')->full_name . ' delete a ' . $entity->getSource();
+        $activity->data = ['changes' => $entity->toArray()];
+        $activity->message = $entity->getMessage(Router::getRequest()->getAttribute('identity'), 'deleted');
         $activity->action = 'deleted';
     }
 }

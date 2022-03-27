@@ -1,6 +1,7 @@
 <?php
 namespace App\Model\Entity;
 
+use App\Classes\ActivityLoggableInterface;
 use Cake\I18n\FrozenTime;
 use Cake\ORM\Entity;
 
@@ -34,7 +35,7 @@ use Cake\ORM\Entity;
  * @property   Item[] $consumables
  * @property   Tip[] $tips
  */
-class Maintenance extends Entity
+class Maintenance extends Entity implements ActivityLoggableInterface
 {
     /**
      * Fields that can be mass assigned using newEntity() or patchEntity().
@@ -48,4 +49,18 @@ class Maintenance extends Entity
     protected $_accessible = [
         '*' => true,
     ];
+
+    public function getMessage($user, string $action): string
+    {
+        switch ($action) {
+            case 'created':
+                return $user->full_name . ' created a new maintenance task ' . $this->name;
+            case 'updated':
+                return $user->full_name . ' edited maintenance task ' . $this->name;
+            case 'deleted':
+                return $user->full_name . ' deleted  maintenance task ' . $this->name;
+            default:
+                return 'No Details';
+        }
+    }
 }

@@ -1,6 +1,8 @@
 <?php
 namespace App\Model\Entity;
 
+use App\Classes\ActivityLoggableInterface;
+use Cake\I18n\FrozenDate;
 use Cake\I18n\FrozenTime;
 use Cake\ORM\Entity;
 
@@ -20,7 +22,11 @@ use Cake\ORM\Entity;
  * @property string $modified_by_id
  * @property int $location_id
  * @property int $created_from_id
- * @property int installed_car_count
+ * @property FrozenDate purchase_date
+ * @property FrozenDate install_date
+ * @property string installer
+ * @property FrozenDate warranty_expiration
+ * @property string model_number
  *
  * @property File $file
  * @property Store $store
@@ -30,9 +36,10 @@ use Cake\ORM\Entity;
  * @property Category[] $categories
  * @property Maintenance[] $maintenances
  * @property Repair[] $repairs
+ * @property File[] $files
  */
 
-class Equipment extends Entity
+class Equipment extends Entity implements ActivityLoggableInterface
 {
     /**
      * Fields that can be mass assigned using newEntity() or patchEntity().
@@ -47,5 +54,17 @@ class Equipment extends Entity
         '*' => true,
     ];
 
-
+    public function getMessage($user, string $action): string
+    {
+        switch ($action) {
+            case 'created':
+                return $user->full_name . ' created ' . $this->name;
+            case 'updated':
+                return $user->full_name . ' edited ' . $this->name;
+            case 'deleted':
+                return $user->full_name . ' deleted ' . $this->name;
+            default:
+                return 'No Details';
+        }
+    }
 }

@@ -50,19 +50,6 @@ use Pusher\PusherException;
  */
 class RepairsTable extends Table
 {
-    public array $repair_association = [
-        'Stores',
-        'Comments' => ['CreatedBy.Files'],
-        'CreatedBy',
-        'AssignedBy.Files',
-        'Equipments',
-        'AssignedTo.Files',
-        'RepairReminders',
-        'Items' => ['Inventories', 'Files'],
-        'Files',
-        'ActivityLogs.Users',
-    ];
-
     /**
      * Initialize method
      *
@@ -87,59 +74,28 @@ class RepairsTable extends Table
             ->setBindingKey('id');
 
 
-        $this->belongsTo(
-            'AssignedTo',
-            [
-                'foreignKey' => 'assigned_to_id',
-                'joinType' => 'LEFT',
-                'className' => 'Users',
-            ]
-        );
+        $this->belongsTo('AssignedTo', [
+            'foreignKey' => 'assigned_to_id',
+            'joinType' => 'LEFT',
+            'className' => 'Users',
+        ]);
 
-        $this->belongsTo(
-            'AssignedBy',
-            [
-                'foreignKey' => 'assigned_by_id',
-                'joinType' => 'LEFT',
-                'className' => 'Users',
-            ]
-        );
+        $this->belongsTo('AssignedBy', [
+            'foreignKey' => 'assigned_by_id',
+            'joinType' => 'LEFT',
+            'className' => 'Users',
+        ]);
 
         $this->belongsTo('Stores');
 
         $this->belongsTo('Maintenances');
 
-        $this->belongsTo(
-            'Equipments',
-            [
-                'foreignKey' => 'equipment_id',
-                'joinType' => 'LEFT',
-            ]
-        );
+        $this->belongsTo('Equipments', [
+            'foreignKey' => 'equipment_id',
+            'joinType' => 'LEFT',
+        ]);
 
         $this->belongsToMany('Items');
-
-        $this->hasOne(
-            'associated_repair',
-            [
-                'foreignKey' => 'id',
-                'targetForeignKey' => 'repair_id',
-                'className' => 'Repairs',
-                'dependent' => false,
-                'cascadeCallbacks' => false,
-            ]
-        );
-
-        $this->belongsToMany(
-            'parent_repair',
-            [
-                'foreignKey' => 'id',
-                'targetForeignKey' => 'repair_id',
-                'className' => 'Repairs',
-                'dependent' => false,
-                'cascadeCallbacks' => false,
-            ]
-        );
 
         $this->hasMany('Comments')
             ->setConditions(['commentable_type' => get_class($this)])
@@ -148,7 +104,7 @@ class RepairsTable extends Table
             ->setSaveStrategy('append');
 
         $this->hasMany('ActivityLogs')
-            ->setConditions(['object_model' => 'Repairs'])
+            ->setConditions(['scope_model' => 'Repairs'])
             ->setForeignKey('object_id')
             ->setBindingKey('id');
 
@@ -227,34 +183,14 @@ class RepairsTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->existsIn(['created_by'], 'CreatedBy', 'The user you created this with no longer exists'));
-        $rules->add($rules->existsIn(['modified_by'], 'ModifiedBy', 'The user you modified this with no longer exists'));
+        $rules->add($rules->existsIn(['created_by_id'], 'CreatedBy', 'The user you created this with no longer exists'));
+        $rules->add($rules->existsIn(['modified_by_iid'], 'ModifiedBy', 'The user you modified this with no longer exists'));
         $rules->add($rules->existsIn(['assigned'], 'AssignedTo'));
         $rules->add($rules->existsIn(['assigned_by'], 'AssignedBy'));
         $rules->add($rules->existsIn(['store_id'], 'Stores'));
         $rules->add($rules->existsIn(['equipment_id'], 'Equipments'));
-        $rules->add($rules->existsIn(['repair_id'], 'associated_repair'));
 
         return $rules;
-    }
-
-    public function beforeSave(Event $event, EntityInterface $entity, ArrayObject $options)
-    {
-        if (isset($entity->files) && count($entity->files) > 0) {
-            $found = (new Collection($entity->files))->firstMatch(
-                [
-                    '_joinData.cover' => true,
-                ]
-            );
-            if ($found) {
-                return;
-            }
-            if (!isset($entity->files[0]->_joinData)) {
-                $entity->files[0]->_joinData = new Entity(['cover' => true]);
-            }
-            $entity->files[0]->_joinData->set('cover', true);
-            $entity->setDirty('files', true);
-        }
     }
 
     /**
@@ -267,21 +203,6 @@ class RepairsTable extends Table
      */
     public function afterSave(Event $event, EntityInterface $entity, ArrayObject $options)
     {
-
-        if ($entity->isDirty('status') && $entity->completed) {
-            NotificationManager::instance()->notify(
-                [
-                    'recipientLists' => ['Store'],
-                    'data' => [
-                        'store_id' => $entity->store_id,
-                        'title' => 'Repair Completed',
-                        'description' => (Router::getRequest() ? Router::getRequest()->getAttribute('identity')->full_name : 'Someone') . '- completed repair ' . $entity->name,
-                        'image_url' => $entity->files ? $entity->files[0]->responsive_images['thumbnail'] : null,
-                        'to' => '/repair/' . $entity->id,
-                    ],
-                ]
-            );
-        }
     }
 
     /**
@@ -291,28 +212,66 @@ class RepairsTable extends Table
      */
     public function findRepairs(Query $q, array $options)
     {
-        return $q->contain([
-            'Stores' => [
-                'fields' => [
-                    'Stores.id',
-                    'Stores.name',
-                    'Stores.file_id',
+        $q->contain([
+                'Stores' => [
+                    'fields' => [
+                        'Stores.id',
+                        'Stores.name',
+                        'Stores.file_id',
+                    ],
                 ],
-            ],
-            'AssignedTo' => [
-                'fields' => [
-                    'AssignedTo.first_name',
-                    'AssignedTo.last_name',
-                    'AssignedTo.file_id',
-                ]
-            ],
-        ])
+                'AssignedTo' => [
+                    'fields' => [
+                        'AssignedTo.first_name',
+                        'AssignedTo.last_name',
+                        'AssignedTo.file_id',
+                    ]
+                ],
+            ])
             ->leftJoinWith('Comments')
             ->leftJoinWith('Files')
             ->select(['file_count' => $q->func()->count('Files.id')])
             ->select(['comment_count' => $q->func()->count('Comments.id')])
             ->group(['Repairs.id'])
             ->enableAutoFields(true);
+
+        if (count($options['assigned_to_id'])) {
+            $q->matching('AssignedTo', function (Query $query) use ($options) {
+                return $query->where(['AssignedTo.id IN' => $options['assigned_to_id']]);
+            });
+        }
+
+        if (count($options['assigned_by_id'])) {
+            $q->matching('AssignedBy', function (Query $query) use ($options) {
+                return $query->where(['AssignedBy.id IN' => $options['assigned_by_id']]);
+            });
+        }
+
+        if (count($options['created_by_id'])) {
+            $q->matching('CreatedBy', function (Query $query) use ($options) {
+                return $query->where(['CreatedBy.id IN' => $options['created_by_id']]);
+            });
+        }
+
+        if (count($options['equipment_id'])) {
+            $q->matching('Equipments', function (Query $query) use ($options) {
+                return $query->where(['Equipments.id IN' => $options['equipment_id']]);
+            });
+        }
+
+        if (count($options['status'])) {
+            $q->where(['Repairs.status IN' => $options['status']]);
+        }
+
+        if ($options['search']) {
+            $q->where(['Repairs.name LIKE' => '%'.$options['search'].'%']);
+        }
+
+        if (isset($options['priority']) && $options['priority'] !== -1) {
+            $q->where(['Repairs.priority' => $options['priority']]);
+        }
+
+        return $q;
     }
 
     public function findDashboard(Query $q, array $options)

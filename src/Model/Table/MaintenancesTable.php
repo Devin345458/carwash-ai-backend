@@ -280,8 +280,8 @@ class MaintenancesTable extends Table
                     },
                     'Equipments.Locations'
                 ]
-
-            ]);
+            ])
+            ->group('Locations.id');
 
         $locations = $query->all()->map(function (Location $location) {
             $location->maintenances = [];

@@ -53,9 +53,9 @@ class MaintenanceSessionsController extends AppController
      */
     public function completeMaintenance($session_id)
     {
-        $maintenanceSessionMaintenancesTable = $this->getTableLocator()->get('MaintenanceSessionsMaintenances');
+        $maintenanceSessionsMaintenancesTable = $this->getTableLocator()->get('MaintenanceSessionsMaintenances');
         $maintenance_ids = $this->getRequest()->getData('maintenanceIds');
-        $maintenance_session_maintenances = $maintenanceSessionMaintenancesTable
+        $maintenance_session_maintenances = $maintenanceSessionsMaintenancesTable
             ->find()
             ->where([
                 'maintenance_session_id' => $session_id,
@@ -65,7 +65,7 @@ class MaintenanceSessionsController extends AppController
         foreach ($maintenance_session_maintenances as $session_maintenance) {
             $session_maintenance->status = 1;
         }
-        if (!$maintenanceSessionMaintenancesTable->saveMany($maintenance_session_maintenances)) {
+        if (!$maintenanceSessionsMaintenancesTable->saveMany($maintenance_session_maintenances)) {
             throw new ValidationException($maintenance_session_maintenances);
         }
     }

@@ -33,6 +33,7 @@ use Cake\ORM\Entity;
  * @property bool $intro
  * @property string|null $about
  * @property string|null $time_zone
+ * @property string $full_name
  *
  * @property Company $company
  * @property File $photo

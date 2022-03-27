@@ -54,15 +54,18 @@ class MaintenancesController extends AppController
     public function edit($id)
     {
         $data = $this->getRequest()->getData();
+        unset($data['equipment']);
 
         $maintenance = $this->Maintenances->get($id, [
             'contain' => [
                 'Items'
             ]
         ]);
-        $maintenance = $this->Maintenances->patchEntity($maintenance, $data);
+        $maintenance = $this->Maintenances->patchEntity($maintenance, $data, [
+            'associated' => ['Items']
+        ]);
 
-        if (!$this->Maintenances->save($maintenance)) {
+        if (!$this->Maintenances->save($maintenance, ['associated' => ['Items']])) {
             throw new ValidationException($maintenance);
         }
 
@@ -167,7 +170,7 @@ class MaintenancesController extends AppController
     public function view($id) {
         $maintenance = $this->Maintenances->get($id, [
             'contain' => [
-                'Items',
+                'Items' => ['ActiveStoreInventories'],
                 'Equipments'
             ]
         ]);

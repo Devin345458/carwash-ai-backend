@@ -78,7 +78,12 @@ class EquipmentsTable extends Table
         ]);
 
         $this->belongsTo('Stores');
-        $this->belongsTo('Files');
+        $this->belongsTo('DisplayImage')
+            ->setForeignKey('file_id')
+            ->setClassName('Files')
+            ->setProperty('file');
+
+        $this->belongsToMany('Files');
         $this->belongsTo('Locations');
         $this->belongsTo('Manufacturers', [
             'foreignKey' => 'manufacturer_id',
@@ -120,10 +125,6 @@ class EquipmentsTable extends Table
             ->scalar('name')
             ->maxLength('name', 255)
             ->allowEmptyString('name', false);
-
-        $validator
-            ->integer('installed_car_count')
-            ->allowEmptyString('installed_car_count', false);
 
         $validator
             ->scalar('type')
@@ -201,15 +202,6 @@ class EquipmentsTable extends Table
         $rules->add($rules->existsIn(['modified_by_id'], 'ModifiedBy', 'The user you modified this with no longer exists'));
 
         return $rules;
-    }
-
-    /**
-     * @param EventInterface $event
-     * @param EntityInterface $entity
-     */
-    public function beforeSave(EventInterface $event, EntityInterface $entity) {
-        /** @var Equipment $entity */
-        $entity->installed_car_count = $entity->installed_car_count?: 0;
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Model\Table\ActivityLogsTable;
 use App\Model\Table\EquipmentsTable;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Datasource\ResultSetInterface;
+use Cake\Http\Exception\NotFoundException;
 use Cake\ORM\Query;
 use Exception;
 
@@ -52,14 +53,14 @@ class EquipmentsController extends AppController
             ]);
         }
 
-        $equipment->contain(['Files', 'Locations', 'Stores']);
+        $equipment->contain(['DisplayImage', 'Locations', 'Stores']);
         $equipment->select([
             'Equipments.id',
             'Equipments.location_id',
             'Equipments.store_id',
             'Stores.name',
-            'Files.name',
-            'Files.dir',
+            'DisplayImage.name',
+            'DisplayImage.dir',
             'Locations.name',
             'Equipments.name',
             'Equipments.position',
@@ -154,62 +155,147 @@ class EquipmentsController extends AppController
     {
         $this->getRequest()->allowMethod(['JSON', 'POST']);
 
-        $activity_logs = $this->ActivityLogs
+        /** @var ActivityLogsTable $activityLogs */
+        $activityLogs = $this->getTableLocator()->get('ActivityLogs');
+
+        $equipmentActivity = $activityLogs->find()
+            ->where(['ActivityLogs.scope_model' => 'Equipments'])
+            ->innerJoinWith('Equipments', function (Query $query) use ($id) {
+                return $query->where(['Equipments.id' => $id]);
+            })
+            ->select([
+                'id' => 'ActivityLogs.id',
+                'created_at' => 'ActivityLogs.created_at',
+                'scope_model' => 'ActivityLogs.scope_model',
+                'scope_id' => 'ActivityLogs.scope_id',
+                'issuer_model' => 'ActivityLogs.issuer_model',
+                'issuer_id' => 'ActivityLogs.issuer_id',
+                'object_model' => 'ActivityLogs.object_model',
+                'object_id' => 'ActivityLogs.object_id',
+                'level' => 'ActivityLogs.level',
+                'action' => 'ActivityLogs.action',
+                'message' => 'ActivityLogs.message',
+                'data' => 'ActivityLogs.data',
+            ]);
+
+        $repairActivity = $activityLogs->find()
+            ->where(['ActivityLogs.scope_model' => 'Repairs'])
+            ->innerJoinWith('Repairs', function (Query $query) use ($id) {
+                return $query->where(['Repairs.equipment_id' => $id]);
+            })
+            ->select([
+                'id' => 'ActivityLogs.id',
+                'created_at' => 'ActivityLogs.created_at',
+                'scope_model' => 'ActivityLogs.scope_model',
+                'scope_id' => 'ActivityLogs.scope_id',
+                'issuer_model' => 'ActivityLogs.issuer_model',
+                'issuer_id' => 'ActivityLogs.issuer_id',
+                'object_model' => 'ActivityLogs.object_model',
+                'object_id' => 'ActivityLogs.object_id',
+                'level' => 'ActivityLogs.level',
+                'action' => 'ActivityLogs.action',
+                'message' => 'ActivityLogs.message',
+                'data' => 'ActivityLogs.data',
+            ]);
+
+
+        $maintenance = $activityLogs->find()
+            ->where(['ActivityLogs.scope_model' => 'Maintenances'])
+            ->innerJoinWith('Maintenances', function (Query $query) use ($id) {
+                return $query->where(['Maintenances.equipment_id' => $id]);
+            })
+            ->select([
+                'id' => 'ActivityLogs.id',
+                'created_at' => 'ActivityLogs.created_at',
+                'scope_model' => 'ActivityLogs.scope_model',
+                'scope_id' => 'ActivityLogs.scope_id',
+                'issuer_model' => 'ActivityLogs.issuer_model',
+                'issuer_id' => 'ActivityLogs.issuer_id',
+                'object_model' => 'ActivityLogs.object_model',
+                'object_id' => 'ActivityLogs.object_id',
+                'level' => 'ActivityLogs.level',
+                'action' => 'ActivityLogs.action',
+                'message' => 'ActivityLogs.message',
+                'data' => 'ActivityLogs.data',
+            ]);
+
+        $comments = $activityLogs->find()
+            ->where(['ActivityLogs.scope_model' => 'Comments'])
+            ->innerJoinWith('Comments', function (Query $query) use ($id) {
+                return $query->where([
+                    'Comments.commentable_id = ' => $id,
+                    'Comments.commentable_type' => 'Equipments'
+                ]);
+            })
+            ->select([
+                'id' => 'ActivityLogs.id',
+                'created_at' => 'ActivityLogs.created_at',
+                'scope_model' => 'ActivityLogs.scope_model',
+                'scope_id' => 'ActivityLogs.scope_id',
+                'issuer_model' => 'ActivityLogs.issuer_model',
+                'issuer_id' => 'ActivityLogs.issuer_id',
+                'object_model' => 'ActivityLogs.object_model',
+                'object_id' => 'ActivityLogs.object_id',
+                'level' => 'ActivityLogs.level',
+                'action' => 'ActivityLogs.action',
+                'message' => 'ActivityLogs.message',
+                'data' => 'ActivityLogs.data',
+            ]);
+
+        $completedMaintenaces = $activityLogs->find()
+            ->where([
+                'ActivityLogs.scope_model' => 'MaintenanceSessionsMaintenances',
+                'ActivityLogs.action' => 'updated',
+            ])
+            ->innerJoinWith('MaintenanceSessionsMaintenances.Maintenances', function (Query $query) use ($id) {
+                return $query->where(['Maintenances.equipment_id' => $id]);
+            })
+            ->select([
+                'id' => 'ActivityLogs.id',
+                'created_at' => 'ActivityLogs.created_at',
+                'scope_model' => 'ActivityLogs.scope_model',
+                'scope_id' => 'ActivityLogs.scope_id',
+                'issuer_model' => 'ActivityLogs.issuer_model',
+                'issuer_id' => 'ActivityLogs.issuer_id',
+                'object_model' => 'ActivityLogs.object_model',
+                'object_id' => 'ActivityLogs.object_id',
+                'level' => 'ActivityLogs.level',
+                'action' => 'ActivityLogs.action',
+                'message' => 'ActivityLogs.message',
+                'data' => 'ActivityLogs.data',
+            ]);
+
+
+
+        $activity_logs = $equipmentActivity
+            ->union($repairActivity)
+            ->union($maintenance)
+            ->union($comments)
+            ->union($completedMaintenaces);
+
+
+        $query = $activityLogs
             ->find()
-            ->contain(
-                [
-                    'Users',
-                    'Equipments',
-                    'Maintenances',
-                    'Repairs',
-                ]
-            )
-            ->where(
-                [
-                    'OR' => [
-                        [
-                            'ActivityLogs.scope_model = ' => 'Equipments',
-                            'ActivityLogs.object_id = ' => $id,
-                        ],
-                        [
-                            'ActivityLogs.scope_model = ' => 'Repairs',
-                            'Repairs.equipment_id = ' => $id,
-                        ],
-                        [
-                            'ActivityLogs.scope_model = ' => 'Maintenances',
-                            'Maintenances.equipment_id = ' => $id,
-                        ],
-                    ],
-                ]
-            )
-            ->order(['ActivityLogs.created_at' => 'DESC'])
-            ->select(
-                [
-                    // User information
-                    'Users.first_name',
-                    'Users.last_name',
+            ->from([
+                $activityLogs->getAlias() => $activity_logs
+            ])
+            ->contain(['Users'])
+            ->select([
+                'Users.id',
+                'Users.first_name',
+                'Users.last_name',
+                'Users.file_id',
+                'ActivityLogs.id',
+                'ActivityLogs.message',
+                'ActivityLogs.issuer_id',
+                'ActivityLogs.object_model',
+                'ActivityLogs.created_at',
+                'ActivityLogs.data',
+                'ActivityLogs.action',
+            ])
+            ->order(['ActivityLogs.created_at' => 'DESC']);
 
-                    // Foreign model info
-                    'Equipments.name',
-                    'Maintenances.name',
-                    'Repairs.name',
-                    'Equipments.id',
-                    'Maintenances.id',
-                    'Repairs.id',
-
-                    // Activity Log Info
-                    'ActivityLogs.created_at',
-                    'ActivityLogs.scope_model',
-                    'ActivityLogs.object_id',
-                    'ActivityLogs.issuer_id',
-                    'ActivityLogs.action',
-                    'ActivityLogs.data',
-                ]
-            );
-        /************
-         * Define color/icon/title/body/route based on the log's object model
-         *************/
-        $this->set(['activity_logs' => $this->paginate($activity_logs)]);
+        $this->set(['activity_logs' => $this->paginate($query)]);
     }
 
     /**
@@ -248,7 +334,7 @@ class EquipmentsController extends AppController
                 'Equipments' => function (Query $query) {
                     return $query->where(
                         ['Equipments.name LIKE' => '%' . $this->getRequest()->getQuery('search') . '%' ]
-                    )->contain(['Manufacturers', 'Files']);
+                    )->contain(['Manufacturers', 'DisplayImage']);
                 },
             ])
             ->first();

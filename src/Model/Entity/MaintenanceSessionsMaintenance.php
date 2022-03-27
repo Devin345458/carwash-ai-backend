@@ -2,7 +2,10 @@
 declare(strict_types=1);
 namespace App\Model\Entity;
 
+use App\Classes\ActivityLoggableInterface;
+use App\Model\Table\MaintenanceSessionsMaintenancesTable;
 use Cake\ORM\Entity;
+use Cake\ORM\TableRegistry;
 
 /**
  * MaintenanceSessionsMaintenance Entity
@@ -23,7 +26,7 @@ use Cake\ORM\Entity;
  * @OA\Property( type="object", property="maintenance_session", description="maintenance_session" , ref="#/components/schemas/MaintenanceSession"),
  * )
  */
-class MaintenanceSessionsMaintenance extends Entity
+class MaintenanceSessionsMaintenance extends Entity implements ActivityLoggableInterface
 {
     /**
      * Fields that can be mass assigned using newEntity() or patchEntity().
@@ -41,4 +44,19 @@ class MaintenanceSessionsMaintenance extends Entity
         'maintenance' => true,
         'maintenance_session' => true,
     ];
+
+    public function getMessage($user, string $action): string
+    {
+        /** @var MaintenanceSessionsMaintenancesTable $maintenancesTable */
+        $maintenanceSessionsMaintenancesTable = TableRegistry::getTableLocator()->get('MaintenanceSessionsMaintenances');
+        $maintenanceSessionsMaintenancesTable->loadInto($this, ['Maintenances']);
+        switch ($action) {
+            case 'updated':
+                return $user->full_name . ' completed ' . $this->maintenance->name;
+            default:
+                return 'No Details';
+        }
+
+
+    }
 }

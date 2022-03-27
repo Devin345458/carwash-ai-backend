@@ -54,6 +54,9 @@ class FilesTable extends Table
         $this->hasMany('Items');
 
         $this->belongsToMany('Repairs');
+
+        $this->hasMany('Equipments');
+        $this->belongsToMany('Equipments');
     }
 
     /**
@@ -69,8 +72,7 @@ class FilesTable extends Table
             ->allowEmptyString('id', 'create');
 
         $validator
-            ->requirePresence('name', 'create')
-            ->allowEmptyString('name', false);
+            ->requirePresence('name', 'create');
 
         $validator
             ->scalar('dir')
