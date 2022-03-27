@@ -351,7 +351,7 @@ class EquipmentsController extends AppController
 
         $equipmentCatalogue = $this->Equipments->find()->matching('Stores', function (Query $q) {
             return $q->where(['Stores.company_id in' => [$this->Authentication->getUser()->company_id, 1]]);
-        })->contain(['Stores', 'Manufacturers']);
+        })->contain(['Stores', 'Manufacturers'])->toArray();
 
         $this->set(['catalogue' => $equipmentCatalogue]);
     }
@@ -370,5 +370,53 @@ class EquipmentsController extends AppController
         }
         $this->Equipments->saveMany($equipments);
         $this->Equipments->setOrder($equipmentIds);
+    }
+
+    public function copyEquipment($storeId) {
+        $equipments = $this->getRequest()->getData('equipment');
+        $companyItems = $this->Equipments->Maintenances->Items->find()
+            ->where([
+                'company_id' => $this->Authentication->getUser()->company_id
+            ])
+            ->all()
+            ->indexBy('name')
+            ->toArray();
+
+        $newEquipment = [];
+        collection($equipments)->each(function ($equipment) use ($companyItems, $storeId, &$newEquipment) {
+            for ($i = 0; $i < $equipment['quantity']; $i++) {
+                $equipment = $this->Equipments->get($equipment['id'], [
+                    'contain' => [
+                        'Maintenances.Items'
+                    ]
+                ]);
+                $equipment->id = null;
+                $equipment->name = $equipment->name . ' - Copy ' . $i;
+                $equipment->store_id = $storeId;
+                $equipment->isNew(true);
+
+                foreach ($equipment->maintenances as $maintenance) {
+                    $maintenance->id = null;
+                    $maintenance->store_id = $storeId;
+                    $maintenance->equipment_id = null;
+                    $maintenance->isNew(true);
+
+                    foreach ($maintenance->items as $item) {
+                        if (isset($companyItems[$item->name])) {
+                            $item->id = $companyItems[$item->name]->id;
+                        } else {
+                            $item->id = null;
+                            $item->isNew(true);
+                        }
+                    }
+                }
+                $newEquipment[] = $equipment;
+            }
+
+        })->toArray();
+
+        if (!$this->Equipments->saveMany($newEquipment)) {
+            throw new ValidationException($newEquipment);
+        }
     }
 }

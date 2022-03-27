@@ -204,7 +204,6 @@ class MaintenancesTable extends Table
     {
         $rules->add($rules->existsIn(['equipment_id'], 'Equipments'));
         $rules->add($rules->existsIn(['store_id'], 'Stores'));
-        $rules->add($rules->isUnique(['name', 'store_id'], 'You maintenance with this name already exists in this store'));
 
         $rules->add(function (Maintenance $maintenance, $options) {
             return $maintenance->frequency_days !== null || $maintenance->frequency_car === null;
