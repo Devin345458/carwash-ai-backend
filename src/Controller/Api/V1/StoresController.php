@@ -231,10 +231,10 @@ class StoresController extends AppController
 
         $data = $this->request->getData();
         // Add all owners to every store
-        if (!isset($data['Users'])) {
-            $data['Users'] = ['_ids' => []];
+        if (!isset($data['users'])) {
+            $data['users'] = ['_ids' => []];
         }
-        $data['Users']['_ids'] = array_merge($data['Users']['_ids'], $owners_ids);
+        $data['users']['_ids'] = array_merge($data['users']['_ids'], $owners_ids);
         $data['company_id'] = $this->Authentication->getUser()->company_id;
         if ($data['store_type_id'] === 2) {
             $data['plan_id'] = '0';

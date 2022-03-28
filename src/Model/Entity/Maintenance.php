@@ -2,6 +2,8 @@
 namespace App\Model\Entity;
 
 use App\Classes\ActivityLoggableInterface;
+use AWS\CRT\Log;
+use Cake\I18n\FrozenDate;
 use Cake\I18n\FrozenTime;
 use Cake\ORM\Entity;
 
@@ -63,4 +65,10 @@ class Maintenance extends Entity implements ActivityLoggableInterface
                 return 'No Details';
         }
     }
+
+    public function _getDueDate() {
+        return (new FrozenDate($this->last_completed_date))->addDay($this->frequency_days);
+    }
+
+    protected $_virtual = ['due_date'];
 }

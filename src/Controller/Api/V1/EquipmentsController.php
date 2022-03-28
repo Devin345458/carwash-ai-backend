@@ -108,7 +108,7 @@ class EquipmentsController extends AppController
             ]
         ]);
         $equipment = $this->Equipments->patchEntity($equipment, $this->getRequest()->getData());
-        if (!$this->Equipments->save($equipment, ['associations' => ['Categories']])) {
+        if (!$this->Equipments->save($equipment, ['associated' => ['Categories']])) {
             throw new ValidationException($equipment);
         }
         $this->set(compact('equipment'));
@@ -124,6 +124,7 @@ class EquipmentsController extends AppController
     {
         $equipment = $this->Equipments->get($id, [
             'contain' => [
+                'Stores',
                 'Categories',
                 'Locations'
             ],
@@ -382,8 +383,13 @@ class EquipmentsController extends AppController
             ->indexBy('name')
             ->toArray();
 
+        $defaultLocation = $this->Equipments->Locations->find()->where([
+            'store_id' => $storeId,
+            'default_location' => true
+        ])->firstOrFail();
+
         $newEquipment = [];
-        collection($equipments)->each(function ($equipment) use ($companyItems, $storeId, &$newEquipment) {
+        collection($equipments)->each(function ($equipment) use ($companyItems, $storeId, &$newEquipment, $defaultLocation) {
             for ($i = 0; $i < $equipment['quantity']; $i++) {
                 $equipment = $this->Equipments->get($equipment['id'], [
                     'contain' => [
@@ -391,7 +397,8 @@ class EquipmentsController extends AppController
                     ]
                 ]);
                 $equipment->id = null;
-                $equipment->name = $equipment->name . ' - Copy ' . $i;
+                $equipment->location_id = $defaultLocation->id;
+                $equipment->name = $equipment->name . ' - Copy ' . ($i + 1);
                 $equipment->store_id = $storeId;
                 $equipment->isNew(true);
 
@@ -404,9 +411,38 @@ class EquipmentsController extends AppController
                     foreach ($maintenance->items as $item) {
                         if (isset($companyItems[$item->name])) {
                             $item->id = $companyItems[$item->name]->id;
+                            $inventory = $this->Equipments
+                                ->Maintenances
+                                ->Items
+                                ->Inventories
+                                ->find()
+                                ->where([
+                                    'item_id' => $item->id,
+                                    'store_id' => $storeId
+                                ])
+                                ->first();
+                            if ($inventory) {
+                                $item->inventories = [$inventory];
+                            }
                         } else {
                             $item->id = null;
                             $item->isNew(true);
+                        }
+
+                        if (!$item->inventory) {
+                            $inventory = $this->Equipments
+                                ->Maintenances
+                                ->Items
+                                ->Inventories
+                                ->newEntity([
+                                    'store_id' => $storeId,
+                                    'cost' => 0,
+                                    'supplier_id' => 0,
+                                    'current_stock' => 0,
+                                    'initial_stock' => 0,
+                                    'desired_stock' => 0,
+                                ]);
+                            $item->inventories = [$inventory];
                         }
                     }
                 }
@@ -415,7 +451,17 @@ class EquipmentsController extends AppController
 
         })->toArray();
 
-        if (!$this->Equipments->saveMany($newEquipment)) {
+        $saved = $this->Equipments->saveMany($newEquipment, [
+            'associated' => [
+                'Maintenances' => [
+                    'Items' => [
+                        'Inventories'
+                    ]
+                ]
+            ]
+        ]);
+
+        if (!$saved) {
             throw new ValidationException($newEquipment);
         }
     }
