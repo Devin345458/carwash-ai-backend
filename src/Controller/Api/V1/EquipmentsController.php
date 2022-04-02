@@ -399,7 +399,7 @@ class EquipmentsController extends AppController
                 $equipment->id = null;
                 $equipment->location_id = $defaultLocation->id;
                 $equipment->name = $equipment->name . ' - Copy ' . ($i + 1);
-                $equipment->manufacturer_id = null;
+                $equipment->manufacturer_id = 0;
                 $equipment->store_id = $storeId;
                 $equipment->isNew(true);
 
