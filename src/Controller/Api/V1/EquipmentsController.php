@@ -399,6 +399,7 @@ class EquipmentsController extends AppController
                 $equipment->id = null;
                 $equipment->location_id = $defaultLocation->id;
                 $equipment->name = $equipment->name . ' - Copy ' . ($i + 1);
+                $equipment->manufacturer_id = null;
                 $equipment->store_id = $storeId;
                 $equipment->isNew(true);
 
@@ -429,7 +430,7 @@ class EquipmentsController extends AppController
                             $item->isNew(true);
                         }
 
-                        if (!$item->inventory) {
+                        if (!$item->inventories) {
                             $inventory = $this->Equipments
                                 ->Maintenances
                                 ->Items

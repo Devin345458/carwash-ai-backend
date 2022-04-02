@@ -17,7 +17,6 @@ use Cake\ORM\Query;
  *
  * @property MaintenancesTable $Maintenances
  * @property SuppliersTable $Suppliers
- * @property InventoryComponent Inventory
  * @method   Maintenance[]|ResultSetInterface paginate($object = null, array $settings = [])
  */
 class MaintenancesController extends AppController
@@ -148,10 +147,11 @@ class MaintenancesController extends AppController
                 });
             })
             ->contain([
+                'Items',
                 'Equipments',
-                'Items.Inventories',
                 'Stores',
-        ])->toArray();
+            ])->toArray();
+
         $this->set(compact('catalogue'));
     }
 
@@ -180,5 +180,81 @@ class MaintenancesController extends AppController
     public function equipment($id = null) {
         $maintenances = $this->Maintenances->find()->where(['Maintenances.equipment_id' => $id]);
         $this->set(compact('maintenances'));
+    }
+
+    public function copyMaintenance($equipmentId) {
+        $maintenances = $this->getRequest()->getData('maintenances');
+        $equipment = $this->Maintenances->Equipments->get($equipmentId);
+
+        $companyItems = $this->Maintenances->Items->find()
+            ->where([
+                'company_id' => $this->Authentication->getUser()->company_id
+            ])
+            ->all()
+            ->indexBy('name')
+            ->toArray();
+
+        $newMaintenance = [];
+        foreach ($maintenances as $maintenance) {
+            $maintenance = $this->Maintenances->get($maintenance['id'], [
+                'contain' => [
+                    'Items'
+                ]
+            ]);
+
+            $maintenance->id = null;
+            $maintenance->store_id = $equipment->store_id;
+            $maintenance->equipment_id = $equipment->id;
+            $maintenance->isNew(true);
+
+            foreach ($maintenance->items as $item) {
+                if (isset($companyItems[$item->name])) {
+                    $item->id = $companyItems[$item->name]->id;
+                    $inventory = $this->Maintenances
+                        ->Items
+                        ->Inventories
+                        ->find()
+                        ->where([
+                            'item_id' => $item->id,
+                            'store_id' => $equipment->store_id
+                        ])
+                        ->first();
+                    if ($inventory) {
+                        $item->inventories = [$inventory];
+                    }
+                } else {
+                    $item->id = null;
+                    $item->isNew(true);
+                }
+
+                if (!$item->inventories) {
+                    $inventory = $this->Maintenances
+                        ->Items
+                        ->Inventories
+                        ->newEntity([
+                            'store_id' => $equipment->store_id,
+                            'cost' => 0,
+                            'supplier_id' => 0,
+                            'current_stock' => 0,
+                            'initial_stock' => 0,
+                            'desired_stock' => 0,
+                        ]);
+                    $item->inventories = [$inventory];
+                }
+            }
+            $newMaintenance[] = $maintenance;
+        }
+
+        $saved = $this->Maintenances->saveMany($newMaintenance, [
+            'associated' => [
+                'Items' => [
+                    'Inventories'
+                ]
+            ]
+        ]);
+
+        if (!$saved) {
+            throw new ValidationException($newMaintenance);
+        }
     }
 }

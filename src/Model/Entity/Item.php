@@ -24,7 +24,7 @@ use Cake\ORM\Entity;
  * @property Company $company
  * @property File $photo
  * @property Inventory[] $inventories
- * @property Inventory $inventory
+ * @property Inventory $active_store_inventory
  */
 class Item extends Entity
 {

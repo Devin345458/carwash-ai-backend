@@ -21,6 +21,7 @@ use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
+use Exception;
 
 /**
  * Maintenances Model
@@ -238,6 +239,7 @@ class MaintenancesTable extends Table
      *
      * @param int $maintenance_id The maintenance to complete
      * @return void
+     * @throws Exception
      */
     public function complete(int $maintenance_id)
     {
