@@ -12,6 +12,7 @@ use Cake\ORM\Entity;
  * @property string $name
  * @property int $size
  * @property string $type
+ * @property int $company_id
  * @property int $width
  * @property int $height
  * @property string $dir

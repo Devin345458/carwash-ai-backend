@@ -96,7 +96,6 @@ class FilesTable extends Table
         $file->company_id = $file->company_id?: Configure::read('COMPANY_ID');
      }
 
-
     public function findSearch(Query $query)
     {
         $params = Router::getRequest()->getQueryParams();

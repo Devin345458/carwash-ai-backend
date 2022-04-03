@@ -49,6 +49,7 @@ class FilesController extends AppController
         if (!$media) {
             throw new RecordNotFoundException(sprintf('Unable to find File with ID %s', $data['id']));
         }
+        $media->company_id = $this->Authentication->getUser()->company_id;
         if (!$this->Files->save($media)) {
             throw new ValidationException($media);
         }

@@ -78,34 +78,43 @@ class EquipmentsTable extends Table
         ]);
 
         $this->belongsTo('Stores');
+
         $this->belongsTo('DisplayImage')
             ->setForeignKey('file_id')
             ->setClassName('Files')
             ->setProperty('file');
 
         $this->belongsToMany('Files');
+
         $this->belongsTo('Locations');
+
         $this->belongsTo('Manufacturers', [
             'foreignKey' => 'manufacturer_id',
             'joinType' => 'LEFT',
             'className' => 'Suppliers',
         ]);
+
         $this->belongsTo('Companies', [
             'through' => 'Stores',
         ]);
 
         $this->belongsToMany('Categories');
 
-        $this->hasMany('Maintenances');
+        $this->hasMany('Maintenances')
+            ->setCascadeCallbacks(true);
+
         $this->hasMany('Repairs');
+
         $this->hasMany('Comments')
             ->setConditions(['commentable_type' => get_class($this)])
             ->setForeignKey('commentable_id')
+            ->setCascadeCallbacks(true)
             ->setBindingKey('id');
 
         $this->hasMany('ActivityLogs')
             ->setConditions(['object_model' => 'Equipments'])
             ->setForeignKey('foreign_key')
+            ->setCascadeCallbacks(true)
             ->setBindingKey('id');
     }
 

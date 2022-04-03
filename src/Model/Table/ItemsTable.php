@@ -49,42 +49,29 @@ class ItemsTable extends Table
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
-        $this->addBehavior('CompanyScope');
 
-        $this->belongsTo(
-            'ItemTypes',
-            [
+        $this->belongsTo('ItemTypes', [
             'foreignKey' => 'item_type_id',
             'joinType' => 'INNER',
-            ]
-        );
-        $this->belongsTo(
-            'Companies',
-            [
-            'foreignKey' => 'company_id',
-            ]
-        );
-        $this->belongsTo(
-            'Files',
-            [
-            'foreignKey' => 'file_id',
-            ]
-        );
-        $this->hasMany(
-            'Inventories',
-            [
-            'foreignKey' => 'item_id',
-            ]
-        );
+        ]);
 
-        $this->hasOne(
-            'ActiveStoreInventories',
-            [
+        $this->belongsTo('Companies', [
+            'foreignKey' => 'company_id',
+        ]);
+
+        $this->belongsTo('Files', [
+            'foreignKey' => 'file_id',
+        ]);
+
+        $this->hasMany('Inventories', [
+            'foreignKey' => 'item_id',
+        ]);
+
+        $this->hasOne('ActiveStoreInventories', [
             'foreignKey' => 'item_id',
             'conditions' => ['ActiveStoreInventories.store_id' => Router::getRequest() ? Router::getRequest()->getAttribute('identity')->active_store : null],
             'className' => 'Inventories',
-            ]
-        );
+        ]);
     }
 
     /**

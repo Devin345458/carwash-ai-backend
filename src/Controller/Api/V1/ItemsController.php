@@ -28,7 +28,10 @@ class ItemsController extends AppController
             ]);
         }
 
-        $items->where(['Items.company_id in' => [$this->Authentication->getIdentityData('company_id')]])
+        $items
+            ->where([
+                'Items.company_id' => $this->Authentication->getIdentityData('company_id')
+            ])
             ->order(['Items.id' => 'ASC'])
             ->contain([ 'ActiveStoreInventories', 'Files']);
 
@@ -57,17 +60,14 @@ class ItemsController extends AppController
         $this->getRequest()->allowMethod('POST');
         $data = $this->getRequest()->getData();
         if ($data['id']) {
-            $item = $this->Items->get(
-                $data['id'],
-                [
-                    'contain' => ['ActiveStoreInventories'],
-                ]
-            );
+            $item = $this->Items->get($data['id'], [
+                'contain' => ['ActiveStoreInventories'],
+            ]);
         } else {
             $item = $this->Items->newEmptyEntity();
         }
         $item = $this->Items->patchEntity($item, $data);
-        $item->set('company_id', $this->Authentication->getIdentityData('company_id'));
+        $item->company_id = $this->Authentication->getIdentityData('company_id');
         if (!$this->Items->save($item)) {
             throw new ValidationException($item);
         }

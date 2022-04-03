@@ -209,7 +209,7 @@ class MaintenancesController extends AppController
 
             foreach ($maintenance->items as $item) {
                 if (isset($companyItems[$item->name])) {
-                    $item->id = $companyItems[$item->name]->id;
+                    $item = $companyItems[$item->name];
                     $inventory = $this->Maintenances
                         ->Items
                         ->Inventories
@@ -224,6 +224,7 @@ class MaintenancesController extends AppController
                     }
                 } else {
                     $item->id = null;
+                    $item->company_id = $this->Authentication->getUser()->company_id;
                     $item->isNew(true);
                 }
 

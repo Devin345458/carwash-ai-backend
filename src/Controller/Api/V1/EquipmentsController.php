@@ -266,8 +266,6 @@ class EquipmentsController extends AppController
                 'data' => 'ActivityLogs.data',
             ]);
 
-
-
         $activity_logs = $equipmentActivity
             ->union($repairActivity)
             ->union($maintenance)
@@ -296,7 +294,7 @@ class EquipmentsController extends AppController
             ])
             ->order(['ActivityLogs.created_at' => 'DESC']);
 
-        $this->set(['activity_logs' => $this->paginate($query)]);
+        $this->set(['activity_logs' => $this->paginate($query, [''])]);
     }
 
     /**
@@ -389,7 +387,7 @@ class EquipmentsController extends AppController
         ])->firstOrFail();
 
         $newEquipment = [];
-        collection($equipments)->each(function ($equipment) use ($companyItems, $storeId, &$newEquipment, $defaultLocation) {
+        foreach ($equipments as $equipment) {
             for ($i = 0; $i < $equipment['quantity']; $i++) {
                 $equipment = $this->Equipments->get($equipment['id'], [
                     'contain' => [
@@ -411,7 +409,7 @@ class EquipmentsController extends AppController
 
                     foreach ($maintenance->items as $item) {
                         if (isset($companyItems[$item->name])) {
-                            $item->id = $companyItems[$item->name]->id;
+                            $item = $companyItems[$item->name];
                             $inventory = $this->Equipments
                                 ->Maintenances
                                 ->Items
@@ -427,6 +425,7 @@ class EquipmentsController extends AppController
                             }
                         } else {
                             $item->id = null;
+                            $item->company_id = $this->Authentication->getUser()->company_id;
                             $item->isNew(true);
                         }
 
@@ -450,7 +449,7 @@ class EquipmentsController extends AppController
                 $newEquipment[] = $equipment;
             }
 
-        })->toArray();
+        }
 
         $saved = $this->Equipments->saveMany($newEquipment, [
             'associated' => [
