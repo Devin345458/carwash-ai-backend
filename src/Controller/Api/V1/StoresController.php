@@ -43,19 +43,20 @@ class StoresController extends AppController
     /**
      * Return the users stores
      *
-     * @param bool $pagination Wether to return all or paginate the request
+     * @param bool $pagination Whether to return all or paginate the request
      * @return void
      */
-    public function getUsersStores($pagination = true)
+    public function getUsersStores(bool $pagination = true)
     {
         $stores = $this->Stores->find();
+        $storeTypeIds = $this->getRequest()->getQuery('store-type-ids', [1, 2]);
         $stores
             ->select(['user_count' => $stores->func()->count('Users.id')])
             ->innerJoinWith('Users', function ($q) {
                     return $q->where(['Users.id =' => $this->Authentication->getUser()->id]);
             })
             ->enableAutoFields()
-            ->where(['store_type_id' => 1])
+            ->where(['store_type_id IN' => $storeTypeIds])
             ->group('Stores.id');
 
         if ($pagination) {
@@ -63,23 +64,6 @@ class StoresController extends AppController
         }
 
         $stores = $stores->toArray();
-
-        $this->set(compact('stores'));
-    }
-
-    public function getUsersWarehouses($pagination = true)
-    {
-        $stores = $this->Stores->find()
-            ->matching(
-                'Users',
-                function ($q) {
-                    return $q->where(['Users.id =' => $this->Authentication->getIdentityData('id')]);
-                }
-            )->where(['store_type_id' => 2]);
-
-        if ($pagination) {
-            $stores = $this->paginate($stores);
-        }
 
         $this->set(compact('stores'));
     }

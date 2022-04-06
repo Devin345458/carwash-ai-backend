@@ -53,7 +53,7 @@ class EquipmentsController extends AppController
             ]);
         }
 
-        $equipment->contain(['DisplayImage', 'Locations', 'Stores']);
+        $equipment->contain(['DisplayImage', 'Locations', 'Stores', 'Manufacturers']);
         $equipment->select([
             'Equipments.id',
             'Equipments.location_id',
@@ -64,6 +64,8 @@ class EquipmentsController extends AppController
             'Locations.name',
             'Equipments.name',
             'Equipments.position',
+            'Manufacturers.id',
+            'Manufacturers.name'
         ]);
 
         $equipment = $equipment->toArray();
