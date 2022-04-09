@@ -8,6 +8,7 @@
 
 namespace App\Model\Behavior;
 
+use App\File\Writer\AppWriter;
 use Aws\S3\S3Client;
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
@@ -54,6 +55,7 @@ class MyUploadBehavior extends UploadBehavior
             'filesystem' => [
                 'adapter' => $adapter,
             ],
+            'writer' => AppWriter::class,
             'nameCallback' => function ($table, $entity, $file, $field, $settings) {
                 $extension = pathinfo($file->getClientFilename(), PATHINFO_EXTENSION);
                 return strtolower(str_replace('.' . $extension, '', $file->getClientFilename())) . '_' . rand() . '.' . $extension;

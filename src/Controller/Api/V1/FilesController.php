@@ -111,6 +111,6 @@ class FilesController extends AppController
     public function image($id, $size = 'thumbnail') {
         /** @var File $file */
         $file = $this->Files->find()->where(['id' => $id])->firstOrFail();
-        $this->redirect($file->responsive_images['thumbnail']);
+        $this->redirect($file->responsive_images[$size]);
     }
 }

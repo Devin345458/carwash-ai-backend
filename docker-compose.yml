@@ -7,76 +7,94 @@ services:
       - ./:/var/www/html/:delegated
       - ~/.composer/docker-cache/:/root/.composer:cached
     environment:
-        # PHP Extensions
-        XDEBUG_CONFIG: remote_host=host.docker.internal
-        PHP_EXTENSION_XDEBUG: 1
-        PHP_EXTENSION_MYSQLI: 1
-        PHP_INI_MEMORY_LIMIT: 1g
-        PHP_EXTENSION_GD: 1
-        PHP_EXTENSION_BZ2: 1
-        PHP_EXTENSION_IMAGICK: 1
-        PHP_EXTENSION_INTL: 1
-        PHP_EXTENSION_PDO_SQLITE: 1
-        # INI Settings
-        PHP_INI_UPLOAD_MAX_FILESIZE: 1g
-        PHP_INI_XDEBUG__REMOTE_START: 1
-        APACHE_DOCUMENT_ROOT: webroot/
-        # Environment
-        PHP_IDE_CONFIG: 'serverName=api.carwashai.local'
+      # PHP Extensions
+      XDEBUG_CONFIG: remote_host=host.docker.internal
+      PHP_EXTENSION_XDEBUG: 1
+      PHP_EXTENSION_MYSQLI: 1
+      PHP_INI_MEMORY_LIMIT: 1g
+      PHP_EXTENSION_GD: 1
+      PHP_EXTENSION_BZ2: 1
+      PHP_EXTENSION_IMAGICK: 1
+      PHP_EXTENSION_INTL: 1
+      PHP_EXTENSION_PDO_SQLITE: 1
+      # INI Settings
+      PHP_INI_UPLOAD_MAX_FILESIZE: 1g
+      PHP_INI_XDEBUG__REMOTE_START: 1
+      APACHE_DOCUMENT_ROOT: webroot/
+      # Environment
+      PHP_IDE_CONFIG: 'serverName=api.carwashai.site'
     restart: unless-stopped
     labels:
-       # Setup rules for http connection
-       - traefik.http.routers.api-carwashai-http.rule=Host(`api.carwashai.local`)
-       - traefik.http.routers.api-carwashai-http.entrypoints=http
+      # Setup rules for http connection
+      - traefik.http.routers.api-carwashai-http.rule=Host(`api.carwashai.site`)
+      - traefik.http.routers.api-carwashai-http.entrypoints=http
 
-       # Setup rules for https connection
-       - traefik.http.routers.api-carwashai-https.rule=Host(`api.carwashai.local`)
-       - traefik.http.routers.api-carwashai-https.entrypoints=https
-       - traefik.http.routers.api-carwashai-https.tls=true
-       - traefik.http.routers.api-carwashai-https.tls.domains.main=api.carwashai.local
-       - traefik.http.services.api-carwashai.loadbalancer.server.port=80
+      # Setup rules for https connection
+      - traefik.http.routers.api-carwashai-https.rule=Host(`api.carwashai.site`)
+      - traefik.http.routers.api-carwashai-https.entrypoints=https
+      - traefik.http.routers.api-carwashai-https.tls=true
+      - traefik.http.routers.api-carwashai-https.tls.domains.main=api.carwashai.site
+      - traefik.http.services.api-carwashai.loadbalancer.server.port=80
 
-       # Add redirect middleware
-       - traefik.http.middlewares.redirect.redirectscheme.scheme=https
-       - traefik.http.routers.api-carwashai-http.middlewares=redirect
+      # Add redirect middleware
+      - traefik.http.middlewares.redirect.redirectscheme.scheme=https
+      - traefik.http.routers.api-carwashai-http.middlewares=redirect
 
-       # Add cors middleware
-       - traefik.http.middlewares.cors.headers.accessControlAllowMethods=GET,OPTIONS,PUT,POST,DELETE
-       - traefik.http.middlewares.cors.headers.accessControlAllowOrigin=*
-       - traefik.http.middlewares.cors.headers.accessControlAllowHeaders=*
-       - traefik.http.routers.api-carwashai-https.middlewares=cors
+      # Add cors middleware
+      - traefik.http.middlewares.cors.headers.accessControlAllowMethods=GET,OPTIONS,PUT,POST,DELETE
+      - traefik.http.middlewares.cors.headers.accesscontrolalloworiginlist=*
+      - traefik.http.middlewares.cors.headers.accessControlAllowHeaders=*
+      - traefik.http.routers.api-carwashai-https.middlewares=cors
 
   minio:
     image: minio/minio
     volumes:
       - ./storage/minio:/data
     environment:
-      MINIO_ACCESS_KEY: minio
-      MINIO_SECRET_KEY: minio123
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+      MINIO_BROWSER_REDIRECT_URL: https://minio-console.site
     labels:
-       # Setup rules for http connection
-       - traefik.http.routers.minio-carwashai-http.rule=Host(`minio.site`)
-       - traefik.http.routers.minio-carwashai-http.entrypoints=http
+      # Setup rules for http connection for console
+      - traefik.http.routers.minio-console-http.service=minio-console
+      - traefik.http.routers.minio-console-http.rule=Host(`minio-console.site`)
+      - traefik.http.routers.minio-console-http.entrypoints=http
 
-       # Setup rules for https connection
-       - traefik.http.routers.minio-carwashai-https.rule=Host(`minio.site`)
-       - traefik.http.routers.minio-carwashai-https.entrypoints=https
-       - traefik.http.routers.minio-carwashai-https.tls=true
-       - traefik.http.services.minio-carwashai.loadbalancer.server.port=9000
-    command: server /data
+      - traefik.http.routers.minio-console-https.service=minio-console
+      - traefik.http.routers.minio-console-https.rule=Host(`minio-console.site`)
+      - traefik.http.routers.minio-console-https.entrypoints=https
+      - traefik.http.routers.minio-console-https.tls=true
+      - traefik.http.services.minio-console.loadbalancer.server.port=9001
+
+      # Setup rules for http connection for api
+      - traefik.http.routers.minio-http.service=minio
+      - traefik.http.routers.minio-http.rule=Host(`minio.site`)
+      - traefik.http.routers.minio-http.entrypoints=http
+
+      # Setup rules for https connection for api
+      - traefik.http.routers.minio-https.service=minio
+      - traefik.http.routers.minio-https.rule=Host(`minio.site`)
+      - traefik.http.routers.minio-https.entrypoints=https
+      - traefik.http.routers.minio-https.tls=true
+      - traefik.http.services.minio.loadbalancer.server.port=9000
+    command:
+      - server
+      - /data
+      - --console-address
+      - ":9001"
 
   createbuckets:
-      image: minio/mc
-      depends_on:
-        - minio
-      entrypoint:
-        /bin/sh -c "
-        /usr/bin/mc config host add myminio http://minio:9000 minio minio123;
-        /usr/bin/mc rm -r --force myminio/carwash-ai-files || true;
-        /usr/bin/mc mb myminio/carwash-ai-files;
-        /usr/bin/mc policy set download myminio/carwash-ai-files;
-        exit 0;
-        "
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint:
+      /bin/sh -c "
+      /usr/bin/mc config host add myminio http://minio:9000 minio minio123;
+      /usr/bin/mc rm -r --force myminio/carwash-ai-files || true;
+      /usr/bin/mc mb myminio/carwash-ai-files;
+      /usr/bin/mc policy set download myminio/carwash-ai-files;
+      exit 0;
+      "
 
 networks:
   default:
