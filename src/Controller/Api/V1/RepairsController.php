@@ -272,4 +272,21 @@ class RepairsController extends AppController
             throw new ValidationException($itemRepair);
         }
     }
+
+    public function bulkImport() {
+        $repairs = collection($this->getRequest()->getData());
+        $repairs = $repairs->map(function ($field) {
+            foreach ($field as $header => $value) {
+                if (in_array($header, ['created', 'due_date'])) {
+                    $field[$header] = new FrozenTime($value);
+                }
+            }
+            return $field;
+        })->toArray();
+        $repairs = $this->Repairs->newEntities($repairs);
+
+        if (!$this->Repairs->saveMany($repairs)) {
+            throw new ValidationException($repairs);
+        }
+    }
 }

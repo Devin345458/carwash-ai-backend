@@ -352,7 +352,16 @@ class EquipmentsController extends AppController
 
         $equipmentCatalogue = $this->Equipments->find()->matching('Stores', function (Query $q) {
             return $q->where(['Stores.company_id in' => [$this->Authentication->getUser()->company_id, 1]]);
-        })->contain(['Stores', 'Manufacturers'])->toArray();
+        })->contain(['Stores', 'Manufacturers']);
+
+        if ($this->getRequest()->getQuery('search')) {
+            $equipmentCatalogue->where(['Equipments.name LIKE' => '%' . $this->getRequest()->getQuery('search') . '%']);
+        }
+
+        $equipmentCatalogue = $this->paginate($equipmentCatalogue);
+        $equipmentCatalogue->each(function (Equipment $equipment) {
+            $equipment->quantity = 1;
+        });
 
         $this->set(['catalogue' => $equipmentCatalogue]);
     }
