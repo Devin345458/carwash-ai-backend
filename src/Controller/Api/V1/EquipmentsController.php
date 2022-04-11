@@ -65,7 +65,7 @@ class EquipmentsController extends AppController
             'Equipments.name',
             'Equipments.position',
             'Manufacturers.id',
-            'Manufacturers.name'
+            'Manufacturers.name',
         ]);
 
         $equipment = $equipment->toArray();
@@ -85,7 +85,7 @@ class EquipmentsController extends AppController
         $equipment = $this->Equipments->newEntity($this->getRequest()->getData());
         $defaultLocation = $this->Equipments->Locations->find()->where([
             'store_id' => $equipment->store_id,
-            'default_location' => true
+            'default_location' => true,
         ])->firstOrFail();
         $equipment->location_id = $defaultLocation->id;
         if (!$this->Equipments->save($equipment)) {
@@ -107,7 +107,7 @@ class EquipmentsController extends AppController
             'contain' => [
                 'Categories',
                 'Locations',
-            ]
+            ],
         ]);
         $equipment = $this->Equipments->patchEntity($equipment, $this->getRequest()->getData());
         if (!$this->Equipments->save($equipment, ['associated' => ['Categories']])) {
@@ -128,7 +128,7 @@ class EquipmentsController extends AppController
             'contain' => [
                 'Stores',
                 'Categories',
-                'Locations'
+                'Locations',
             ],
         ]);
 
@@ -201,7 +201,6 @@ class EquipmentsController extends AppController
                 'data' => 'ActivityLogs.data',
             ]);
 
-
         $maintenance = $activityLogs->find()
             ->where(['ActivityLogs.scope_model' => 'Maintenances'])
             ->innerJoinWith('Maintenances', function (Query $query) use ($id) {
@@ -227,7 +226,7 @@ class EquipmentsController extends AppController
             ->innerJoinWith('Comments', function (Query $query) use ($id) {
                 return $query->where([
                     'Comments.commentable_id = ' => $id,
-                    'Comments.commentable_type' => 'Equipments'
+                    'Comments.commentable_type' => 'Equipments',
                 ]);
             })
             ->select([
@@ -274,11 +273,10 @@ class EquipmentsController extends AppController
             ->union($comments)
             ->union($completedMaintenaces);
 
-
         $query = $activityLogs
             ->find()
             ->from([
-                $activityLogs->getAlias() => $activity_logs
+                $activityLogs->getAlias() => $activity_logs,
             ])
             ->contain(['Users'])
             ->select([
@@ -369,7 +367,8 @@ class EquipmentsController extends AppController
     /**
      * @throws Exception
      */
-    public function reorder($locationId) {
+    public function reorder($locationId)
+    {
         $equipmentIds = $this->getRequest()->getData('equipmentIds');
         if (!count($equipmentIds)) {
             return;
@@ -382,11 +381,12 @@ class EquipmentsController extends AppController
         $this->Equipments->setOrder($equipmentIds);
     }
 
-    public function copyEquipment($storeId) {
+    public function copyEquipment($storeId)
+    {
         $equipments = $this->getRequest()->getData('equipment');
         $companyItems = $this->Equipments->Maintenances->Items->find()
             ->where([
-                'company_id' => $this->Authentication->getUser()->company_id
+                'company_id' => $this->Authentication->getUser()->company_id,
             ])
             ->all()
             ->indexBy('name')
@@ -394,26 +394,26 @@ class EquipmentsController extends AppController
 
         $defaultLocation = $this->Equipments->Locations->find()->where([
             'store_id' => $storeId,
-            'default_location' => true
+            'default_location' => true,
         ])->firstOrFail();
 
-        $newEquipment = [];
+        $newEquipments = [];
         foreach ($equipments as $equipment) {
             for ($i = 0; $i < $equipment['quantity']; $i++) {
-                $equipment = $this->Equipments->get($equipment['id'], [
+                $newEquipment = $this->Equipments->get($equipment['id'], [
                     'contain' => [
-                        'Maintenances.Items'
-                    ]
+                        'Maintenances.Items',
+                    ],
                 ]);
-                $equipment->id = null;
-                $equipment->location_id = $defaultLocation->id;
-                $equipment->name = $equipment->name . ' - Copy ' . ($i + 1);
-                $equipment->manufacturer_id = 0;
-                $equipment->store_id = $storeId;
-                $equipment->isNew(true);
-                $equipment->position = null;
+                $newEquipment->id = null;
+                $newEquipment->location_id = $defaultLocation->id;
+                $newEquipment->name = $newEquipment->name . ' - Copy ' . ($i + 1);
+                $newEquipment->manufacturer_id = 0;
+                $newEquipment->store_id = $storeId;
+                $newEquipment->isNew(true);
+                $newEquipment->position = null;
 
-                foreach ($equipment->maintenances as $maintenance) {
+                foreach ($newEquipment->maintenances as $maintenance) {
                     $maintenance->id = null;
                     $maintenance->store_id = $storeId;
                     $maintenance->equipment_id = null;
@@ -429,7 +429,7 @@ class EquipmentsController extends AppController
                                 ->find()
                                 ->where([
                                     'item_id' => $item->id,
-                                    'store_id' => $storeId
+                                    'store_id' => $storeId,
                                 ])
                                 ->first();
                             if ($inventory) {
@@ -458,19 +458,18 @@ class EquipmentsController extends AppController
                         }
                     }
                 }
-                $newEquipment[] = $equipment;
+                $newEquipments[] = $newEquipment;
             }
-
         }
 
-        $saved = $this->Equipments->saveMany($newEquipment, [
+        $saved = $this->Equipments->saveMany($newEquipments, [
             'associated' => [
                 'Maintenances' => [
                     'Items' => [
-                        'Inventories'
-                    ]
-                ]
-            ]
+                        'Inventories',
+                    ],
+                ],
+            ],
         ]);
 
         if (!$saved) {
