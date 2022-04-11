@@ -17,7 +17,7 @@ use Cake\ORM\Entity;
  * @property FrozenTime $created
  * @property FrozenTime $modified
  * @property bool $completed
- * @property FrozenTime $due_date
+ * @property FrozenTime last_completed_date
  * @property FrozenTime $reminder
  * @property int $priority
  * @property float $health_impact

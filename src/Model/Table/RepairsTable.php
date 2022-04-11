@@ -199,10 +199,16 @@ class RepairsTable extends Table
      * @param Event $event The event
      * @param Repair $entity The repair
      * @param ArrayObject $options The options
-     * @throws PusherException
      */
-    public function afterSave(Event $event, EntityInterface $entity, ArrayObject $options)
+    public function beforeSave(Event $event, EntityInterface $entity, ArrayObject $options)
     {
+        if (!$entity->priority) {
+            $entity->priority = 0;
+        }
+
+        if (!$entity->status) {
+            $entity->status = 'Pending Assignment';
+        }
     }
 
     /**

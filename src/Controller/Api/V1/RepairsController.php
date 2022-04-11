@@ -30,7 +30,7 @@ class RepairsController extends AppController
      * @param string|null $store_id The store to get repairs for
      * @return void
      */
-    public function index(string $store_id = null)
+    public function index(?string $store_id = null)
     {
         $repairs = $this->Repairs->find('repairs', $this->getRequest()->getData('filters'));
 
@@ -72,8 +72,8 @@ class RepairsController extends AppController
                         'CreatedBy.first_name',
                         'CreatedBy.last_name',
                     ],
-                ]
-            ]
+                ],
+            ],
         ]);
         $this->set(compact('repair'));
     }
@@ -91,7 +91,7 @@ class RepairsController extends AppController
             'contain' => [
                 'Files',
                 'Items.ActiveStoreInventories',
-            ]
+            ],
         ]);
 
         $field = $this->getRequest()->getData('field');
@@ -145,7 +145,8 @@ class RepairsController extends AppController
         $this->set(compact('repair'));
     }
 
-    public function dashboardWidget() {
+    public function dashboardWidget()
+    {
         $date = new FrozenDate();
         $upcoming_date = new FrozenDate('+7 days');
         $due = $this->Repairs->find('repairs')->where(['due_date =' => $date]);
@@ -193,7 +194,7 @@ class RepairsController extends AppController
             ->innerJoinWith('Comments', function (Query $query) use ($id) {
                 return $query->where([
                     'Comments.commentable_id = ' => $id,
-                    'Comments.commentable_type' => 'Repairs'
+                    'Comments.commentable_type' => 'Repairs',
                 ]);
             })
             ->select([
@@ -215,7 +216,7 @@ class RepairsController extends AppController
             ->where(['ActivityLogs.scope_model' => 'ItemsRepairs'])
             ->innerJoinWith('ItemsRepairs', function (Query $query) use ($id) {
                 return $query->where([
-                    'ItemsRepairs.repair_id' => $id
+                    'ItemsRepairs.repair_id' => $id,
                 ]);
             })
             ->select([
@@ -233,17 +234,14 @@ class RepairsController extends AppController
                 'data' => 'ActivityLogs.data',
             ]);
 
-
-
         $activity_logs = $repairActivity
             ->union($items)
             ->union($comments);
 
-
         $activityLogs = $activityLogs
             ->find()
             ->from([
-                $activityLogs->getAlias() => $activity_logs
+                $activityLogs->getAlias() => $activity_logs,
             ])
             ->contain(['Users'])
             ->select([
@@ -264,7 +262,8 @@ class RepairsController extends AppController
         $this->set(['activity_logs' => $this->paginate($activityLogs)]);
     }
 
-    public function deleteItemFromRepair($id, $itemId) {
+    public function deleteItemFromRepair($id, $itemId)
+    {
         /** @var ItemsRepairsTable $itemsRepairsTable */
         $itemsRepairsTable = $this->getTableLocator()->get('ItemsRepairs');
         $itemRepair = $itemsRepairsTable->find()->where(['repair_id' => $id, 'item_id' => $itemId])->firstOrFail();
@@ -273,7 +272,8 @@ class RepairsController extends AppController
         }
     }
 
-    public function bulkImport() {
+    public function bulkImport()
+    {
         $repairs = collection($this->getRequest()->getData());
         $repairs = $repairs->map(function ($field) {
             foreach ($field as $header => $value) {
@@ -281,6 +281,7 @@ class RepairsController extends AppController
                     $field[$header] = new FrozenTime($value);
                 }
             }
+
             return $field;
         })->toArray();
         $repairs = $this->Repairs->newEntities($repairs);

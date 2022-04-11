@@ -339,14 +339,13 @@ class MaintenancesTable extends Table
         if ($entity->frequency_days) {
             $entity->method = 'Time';
             if ($entity->isNew()) {
-                $entity->due_date = (new Date())->modify('+' . $entity->frequency_days . ' days');
+                $entity->last_completed_date = new FrozenTime();
             }
         } else {
             $entity->method = 'Car Count';
             if ($entity->isNew()) {
-                $current_carcount = $this->Equipments->Stores->CarCounts->find()->where(['store_id =' => $entity->store_id]);
-                $currentCarCount = $current_carcount->sumOf('carcount');
-                $entity->due_cars = $currentCarCount;
+                $current_car_count = $this->Equipments->Stores->CarCounts->find()->where(['store_id =' => $entity->store_id])->sumOf('carcount');
+                $entity->last_cars_completed = $current_car_count;
             }
         }
     }
