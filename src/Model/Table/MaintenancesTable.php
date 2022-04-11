@@ -275,12 +275,17 @@ class MaintenancesTable extends Table
                 return $query->find('due', compact('store_id', 'due'));
             })
             ->contain([
-                'Equipments.Maintenances' => [
-                    'Items.Inventories' => function (Query $q) use ($store_id) {
-                        return $q->where(['Inventories.store_id' => $store_id]);
-                    },
-                    'Equipments.Locations'
-                ]
+                'Equipments.Maintenances' => function (Query $query) use ($store_id, $due) {
+                    $query->find('due', compact('store_id', 'due'));
+                    $query->contain([
+                        'Items.Inventories' => function (Query $q) use ($store_id) {
+                            return $q->where(['Inventories.store_id' => $store_id]);
+                        },
+                        'Equipments.Locations',
+                    ]);
+
+                    return $query;
+                },
             ])
             ->group('Locations.id');
 
@@ -292,6 +297,7 @@ class MaintenancesTable extends Table
                 }
             }
             unset($location->equipments);
+
             return $location;
         });
 
