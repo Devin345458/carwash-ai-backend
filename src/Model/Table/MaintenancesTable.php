@@ -316,12 +316,14 @@ class MaintenancesTable extends Table
         /** @var Store $store */
         $store = $this->Equipments->Stores->findById($options['store_id'])->first();
 
-        $where = ['OR' => []];
+        $where = [];
         if ($options['due']) {
+            $where['OR'] = [];
             $where['OR']['DATE_ADD(Maintenances.last_completed_date, INTERVAL Maintenances.frequency_days DAY)  <='] = (new FrozenDate())->addDay($store->maintenance_due_days_offset);
             $where['OR']['Maintenances.last_completed_date IS'] = null;
         } else {
-            $where['OR']['DATE_ADD(Maintenances.last_completed_date, INTERVAL Maintenances.frequency_days DAY)  <='] = (new FrozenDate())->addDay($store->upcoming_days_offset);
+            $where['DATE_ADD(Maintenances.last_completed_date, INTERVAL Maintenances.frequency_days DAY)  <='] = (new FrozenDate())->addDay($store->upcoming_days_offset);
+            $where['DATE_ADD(Maintenances.last_completed_date, INTERVAL Maintenances.frequency_days DAY)  >'] = (new FrozenDate())->addDay($store->maintenance_due_days_offset);
         }
         $q->where($where);
 
