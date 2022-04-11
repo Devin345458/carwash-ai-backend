@@ -411,6 +411,7 @@ class EquipmentsController extends AppController
                 $equipment->manufacturer_id = 0;
                 $equipment->store_id = $storeId;
                 $equipment->isNew(true);
+                $equipment->position = null;
 
                 foreach ($equipment->maintenances as $maintenance) {
                     $maintenance->id = null;
