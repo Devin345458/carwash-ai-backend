@@ -43,7 +43,12 @@ class RepairsController extends AppController
                 });
             });
         }
-        $this->set(['repairs' => $this->paginate($repairs)]);
+        $this->set(['repairs' => $this->paginate($repairs, [
+            'page' => $this->getRequest()->getData('page'),
+            'limit' => $this->getRequest()->getData('perPage'),
+            'sort' => $this->getRequest()->getData('sort'),
+            'direction' => $this->getRequest()->getData('direction', 'desc'),
+        ])]);
     }
 
     public function add()
