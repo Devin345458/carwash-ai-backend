@@ -283,6 +283,7 @@ class MaintenancesTable extends Table
                         },
                         'Equipments.Locations',
                     ]);
+                    $query->order('Equipments.position');
 
                     return $query;
                 },

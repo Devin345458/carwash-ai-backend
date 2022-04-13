@@ -97,10 +97,10 @@ class EquipmentsController extends AppController
     /**
      * Add equipment to active store
      *
+     * @param string|null $id The id of the equipment to view
      * @return void
-     * @throws Exception
      */
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $this->getRequest()->allowMethod('POST');
         $equipment = $this->Equipments->get($id, [
@@ -113,6 +113,14 @@ class EquipmentsController extends AppController
         if (!$this->Equipments->save($equipment, ['associated' => ['Categories']])) {
             throw new ValidationException($equipment);
         }
+
+        $equipment = $this->Equipments->get($id, [
+            'contain' => [
+                'Stores',
+                'Categories',
+                'Locations',
+            ],
+        ]);
         $this->set(compact('equipment'));
     }
 
