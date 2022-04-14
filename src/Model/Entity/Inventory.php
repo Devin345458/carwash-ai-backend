@@ -2,7 +2,11 @@
 namespace App\Model\Entity;
 
 use Cake\Collection\Collection;
+use Cake\Log\Log;
 use Cake\ORM\Entity;
+use Cake\ORM\Locator\TableLocator;
+use Cake\ORM\TableRegistry;
+use Throwable;
 
 /**
  * Inventory Entity
@@ -37,19 +41,27 @@ class Inventory extends Entity
         '*' => true,
     ];
 
+    /**
+     * @return float|int
+     */
     protected function _getTotal()
     {
         return $this->get('current_stock') * $this->get('cost');
     }
 
-    protected function _getLastUsedBy()
+    /**
+     * @return string
+     */
+    protected function _getLastUsedBy(): string
     {
-        $inventory_transactions = $this->get('inventory_transactions');
-        if ($inventory_transactions) {
-            $inventory_transactions = new Collection($inventory_transactions);
-            $inventory_transactions = $inventory_transactions->sortBy('created');
-
-            return $inventory_transactions->first()['createdBy']['full_name'];
+        try {
+            /** @var null|InventoryTransaction $inventory_transaction */
+            $inventory_transaction = TableRegistry::getTableLocator()->get('InventoryTransactions')->query()->orderDesc('InventoryTransactions.created')->where(['inventory_id' => $this->id])->first();
+            if ($inventory_transaction) {
+                return $inventory_transaction->created_by->full_name;
+            }
+        } catch (Throwable $exception) {
+            Log::debug($exception->getMessage());
         }
 
         return 'Never Used';

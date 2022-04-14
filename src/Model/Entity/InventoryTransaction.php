@@ -11,8 +11,11 @@ use Cake\ORM\Entity;
  * @property int $difference
  * @property int $inventory_id
  * @property \Cake\I18n\FrozenTime|null $created
- * @property string|null $created_by
+ * @property string|null $created_by_id
+ * @property string|null $modified_by_id
  * @property int|null $transaction_action_id
+ * @property User|null $created_by
+ * @property User|null $modified_by
  *
  * @property \App\Model\Entity\TransactionAction $transaction_action
  */
