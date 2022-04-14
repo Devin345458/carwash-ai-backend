@@ -63,7 +63,7 @@ class UsersTable extends Table
             'joinType' => 'INNER',
         ]);
 
-        $this->belongsToMany('Stores');
+        $this->belongsToMany('Stores')->setSaveStrategy('replace');
 
         $this->belongsTo('Files', [
             'foreignKey' => 'file_id',

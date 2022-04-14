@@ -34,20 +34,25 @@ class UsersController extends AppController
         $this->Authentication->allowUnauthenticated(['login', 'register', 'logout']);
     }
 
-    public function index($storeId = null) {
+    public function index($storeId = null)
+    {
         $users = $this->Users->find();
+        $users
+            ->contain(['Stores'])
+            ->group('Users.id')
+            ->enableAutoFields();
 
         if ($storeId) {
             $users->innerJoinWith('Stores', function (Query $query) use ($storeId) {
                 return $query->where(['Stores.id' => $storeId]);
             });
-        } else {
-            $users->where(['Users.company_id =' => $this->Authentication->getUser()->company_id]);
         }
 
         if ($this->getRequest()->getQuery('excludeOwners')) {
             $users->where(['Users.role !=' => 'owner']);
         }
+
+        $users = $users->toArray();
 
         $this->set(compact('users'));
     }
@@ -123,7 +128,8 @@ class UsersController extends AppController
         $this->set(compact($user));
     }
 
-    public function edit() {
+    public function edit()
+    {
         $data = $this->getRequest()->getData();
         if ($data['id'] !== $this->Authentication->getUser()->id) {
             throw new UnauthorizedException('You may only edit your own profile');
@@ -136,9 +142,10 @@ class UsersController extends AppController
         $this->set(compact('user'));
     }
 
-    public function resetPassword() {
+    public function resetPassword()
+    {
         $data = $this->getRequest()->getData();
-        if (!(new DefaultPasswordHasher)->check($data['current_password'], $this->Authentication->getUser()->password)) {
+        if (!(new DefaultPasswordHasher())->check($data['current_password'], $this->Authentication->getUser()->password)) {
             throw new UnauthenticatedException('Incorrect Current Password');
         }
         $user = $this->Authentication->getUser();
@@ -162,32 +169,39 @@ class UsersController extends AppController
         }
     }
 
-    public function store($id) {
+    public function store($id)
+    {
         $users = $this->Users->find();
         $users
-            ->innerJoinWith('Stores', function(Query $query) use ($id) {
+            ->innerJoinWith('Stores', function (Query $query) use ($id) {
                 return $query->where(['Stores.id' => $id]);
             })
             ->select(['store_count' => $users->func()->count('Stores.id')])
             ->group('Users.id')
-            ->enableAutoFields()->toArray();
+            ->enableAutoFields();
 
         $this->paginate($users);
 
         $this->set(compact('users'));
     }
 
-    public function upsert($store_id) {
+    public function upsert($store_id = null)
+    {
         $data = $this->getRequest()->getData();
         if ($data['id']) {
-            $user = $this->Users->get($data['id']);
-        } else {
-            $user = $this->Users->newEntity([
-                'company_id' => $this->Authentication->getUser()->company_id,
-                'stores' => [
-                    '_ids' => [$store_id]
-                ]
+            $user = $this->Users->get($data['id'], [
+                'contain' => [
+                    'Stores',
+                ],
             ]);
+        } else {
+            $temp = ['company_id' => $this->Authentication->getUser()->company_id];
+            if ($store_id) {
+                $temp['stores'] = [
+                    '_ids' => [$store_id],
+                ];
+            }
+            $user = $this->Users->newEntity($temp);
         }
         $user = $this->Users->patchEntity($user, $data);
         if (!$this->Users->save($user)) {
@@ -195,7 +209,8 @@ class UsersController extends AppController
         }
     }
 
-    public function removeStore($userId, $storeId) {
+    public function removeStore($userId, $storeId)
+    {
         $user = $this->Users->get($userId);
         $store = $this->Users->Stores->get($storeId);
         $this->Users->Stores->unlink($user, [$store]);
