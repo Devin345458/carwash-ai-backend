@@ -12,7 +12,6 @@ use Cake\Datasource\ResultSetInterface;
 use Cake\Event\EventInterface;
 use Cake\ORM\Association\BelongsTo;
 use Cake\ORM\Association\BelongsToMany;
-use Cake\ORM\Association\HasMany;
 use Cake\ORM\Behavior\TimestampBehavior;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
@@ -188,8 +187,8 @@ class UsersTable extends Table
     }
 
     /**
-     * @param Query $query
-     * @param array $options
+     * @param Query $query The query
+     * @param array $options The options
      * @return Query
      */
     public function findAuth(Query $query, array $options)
@@ -206,6 +205,9 @@ class UsersTable extends Table
     public function beforeSave(EventInterface $event, User $user, ArrayObject $options)
     {
         if ($user->isNew()) {
+            if ($user->role === 'owner') {
+                $user->stores = $this->Stores->find()->where(['company_id' => $user->company_id])->toArray();
+            }
             $user->active_store = 0;
         }
     }
