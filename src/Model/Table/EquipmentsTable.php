@@ -74,7 +74,7 @@ class EquipmentsTable extends Table
             'contain' => false,
         ]);
 
-        $this->addBehavior('Polymorphic.morph');
+        $this->addBehavior('Polymorphic.Morph');
 
         $this->addBehavior('ADmad/Sequence.Sequence', [
             'order' => 'position', // Field to use to store integer sequence. Default "position".
