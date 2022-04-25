@@ -26,7 +26,6 @@ class ActivityLogger implements EventListenerInterface
     public function logActivity(EventInterface $event, EntityInterface $entity, ArrayObject $options) {
         /** @var ActivityLogsTable $activitiesTable */
         $activitiesTable = $this->getTableLocator()->get('ActivityLogs');
-
         $activitiesTable->logActivity($event, $entity, $options);
     }
 

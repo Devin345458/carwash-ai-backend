@@ -5,6 +5,7 @@ use App\Controller\AppController;
 use App\Error\Exception\ValidationException;
 use App\Model\Entity\Equipment;
 use App\Model\Table\ActivityLogsTable;
+use App\Model\Table\EquipmentGroupsTable;
 use App\Model\Table\EquipmentsTable;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Datasource\ResultSetInterface;
@@ -42,10 +43,8 @@ class EquipmentsController extends AppController
         $equipment = $this->Equipments->find();
 
         if (!$store_id) {
-            $equipment = $this->Equipments->find()->matching('Stores', function (Query $query) {
-                return $query->matching('Users', function (Query $query) {
-                    return $query->where(['Users.id' => $this->Authentication->getUser()->id]);
-                });
+            $equipment = $this->Equipments->find()->innerJoinWith('Stores.Users', function (Query $query) {
+                return $query->where(['Users.id' => $this->Authentication->getUser()->id]);
             });
         } else {
             $equipment->where([
@@ -56,14 +55,14 @@ class EquipmentsController extends AppController
         $equipment->contain(['DisplayImage', 'Locations', 'Stores', 'Manufacturers']);
         $equipment->select([
             'Equipments.id',
+            'Equipments.name',
             'Equipments.location_id',
             'Equipments.store_id',
+            'Equipments.position',
             'Stores.name',
             'DisplayImage.name',
             'DisplayImage.dir',
             'Locations.name',
-            'Equipments.name',
-            'Equipments.position',
             'Manufacturers.id',
             'Manufacturers.name',
         ]);
@@ -142,8 +141,8 @@ class EquipmentsController extends AppController
 
         $completed_maintenance_count = $this->Equipments->Maintenances->MaintenanceSessionsMaintenances
             ->find()
-            ->innerJoinWith('Maintenances.Equipments', function (Query $query) use ($id) {
-                return $query->where(['Equipments.id' => $id]);
+            ->innerJoinWith('Maintenances', function (Query $query) use ($id) {
+                return $query->where(['Maintenances.maintainable_id' => $id, 'Maintenances.maintainable_type' => 'Equipments']);
             })
             ->where(['status' => 1])
             ->count();
@@ -212,7 +211,7 @@ class EquipmentsController extends AppController
         $maintenance = $activityLogs->find()
             ->where(['ActivityLogs.scope_model' => 'Maintenances'])
             ->innerJoinWith('Maintenances', function (Query $query) use ($id) {
-                return $query->where(['Maintenances.equipment_id' => $id]);
+                return $query->where(['Maintenances.maintainable_id' => $id, 'Maintenances.maintainable_type' => 'Equipments']);
             })
             ->select([
                 'id' => 'ActivityLogs.id',
@@ -252,13 +251,23 @@ class EquipmentsController extends AppController
                 'data' => 'ActivityLogs.data',
             ]);
 
-        $completedMaintenaces = $activityLogs->find()
+        $equipmentGroupIds = $this->Equipments->EquipmentGroups->find()->innerJoinWith('Equipments', function (Query $query) use ($id) {
+            return $query->where(['Equipments.id' => $id]);
+        })->extract('id')->toArray();
+
+        $completedMaintenance = $activityLogs->find()
             ->where([
                 'ActivityLogs.scope_model' => 'MaintenanceSessionsMaintenances',
                 'ActivityLogs.action' => 'updated',
             ])
-            ->innerJoinWith('MaintenanceSessionsMaintenances.Maintenances', function (Query $query) use ($id) {
-                return $query->where(['Maintenances.equipment_id' => $id]);
+            ->innerJoinWith('MaintenanceSessionsMaintenances.Maintenances', function (Query $query) use ($id, $equipmentGroupIds) {
+                return $query
+                    ->where([
+                        'OR' => [
+                            ['Maintenances.maintainable_id' => $id, 'Maintenances.maintainable_type' => 'Equipments'],
+                            ['Maintenances.maintainable_id IN' => $equipmentGroupIds, 'Maintenances.maintainable_type' => 'EquipmentGroups']
+                        ]
+                    ]);
             })
             ->select([
                 'id' => 'ActivityLogs.id',
@@ -279,7 +288,7 @@ class EquipmentsController extends AppController
             ->union($repairActivity)
             ->union($maintenance)
             ->union($comments)
-            ->union($completedMaintenaces);
+            ->union($completedMaintenance);
 
         $query = $activityLogs
             ->find()

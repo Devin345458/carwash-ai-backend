@@ -22,6 +22,7 @@ use Imagine\Image\ImageInterface;
 use Imagine\Imagick\Imagine;
 use Josegonzalez\Upload\Validation\UploadValidation;
 use League\Flysystem\AwsS3v3\AwsS3Adapter;
+use Polymorphic\Model\Behavior\MorphBehavior;
 
 /**
  * Equipments Model
@@ -37,6 +38,7 @@ use League\Flysystem\AwsS3v3\AwsS3Adapter;
  * @property LocationsTable|BelongsTo $Locations
  * @property FilesTable|BelongsTo $Files
  * @property ActivityLogsTable|BelongsTo $ActivityLogs
+ * @property EquipmentGroupsTable|BelongsToMany $EquipmentGroups
  * @method Equipment get($primaryKey, $options = [])
  * @method Equipment newEntity($data = null, array $options = [])
  * @method Equipment[] newEntities(array $data, array $options = [])
@@ -47,6 +49,7 @@ use League\Flysystem\AwsS3v3\AwsS3Adapter;
  * @method Equipment findOrCreate($search, callable $callback = null, $options = [])
  * @method Query findById(int $id)
  * @mixin SequenceBehavior
+ * @mixin MorphBehavior
  */
 class EquipmentsTable extends Table
 {
@@ -71,6 +74,8 @@ class EquipmentsTable extends Table
             'contain' => false,
         ]);
 
+        $this->addBehavior('Polymorphic.morph');
+
         $this->addBehavior('ADmad/Sequence.Sequence', [
             'order' => 'position', // Field to use to store integer sequence. Default "position".
             'scope' => ['location_id', 'store_id'], // Array of field names to use for grouping records. Default [].
@@ -78,6 +83,8 @@ class EquipmentsTable extends Table
         ]);
 
         $this->belongsTo('Stores');
+
+        $this->belongsToMany('EquipmentGroups');
 
         $this->belongsTo('DisplayImage')
             ->setForeignKey('file_id')
@@ -100,7 +107,7 @@ class EquipmentsTable extends Table
 
         $this->belongsToMany('Categories');
 
-        $this->hasMany('Maintenances')
+        $this->morphsMany('Maintenances', 'maintainable')
             ->setCascadeCallbacks(true);
 
         $this->hasMany('Repairs');

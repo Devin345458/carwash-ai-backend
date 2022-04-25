@@ -56,7 +56,5 @@ class MaintenanceSessionsMaintenance extends Entity implements ActivityLoggableI
             default:
                 return 'No Details';
         }
-
-
     }
 }

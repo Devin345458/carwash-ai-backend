@@ -5,12 +5,15 @@ use App\Controller\AppController;
 use App\Controller\Component\InventoryComponent;
 use App\Error\Exception\ValidationException;
 use App\Model\Entity\Equipment;
+use App\Model\Entity\EquipmentGroup;
 use App\Model\Entity\Maintenance;
 use App\Model\Table\MaintenancesTable;
 use App\Model\Table\SuppliersTable;
+use Cake\Database\Expression\QueryExpression;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Datasource\ResultSetInterface;
 use Cake\ORM\Query;
+use Cake\Utility\Inflector;
 
 /**
  * Maintenances Controller
@@ -32,11 +35,18 @@ class MaintenancesController extends AppController
 
         $maintenance = $this->Maintenances->newEntity($data['maintenance']);
         $maintenance = $this->Maintenances->patchEntity($maintenance, $data);
-        if ($maintenance->equipment_id) {
-            /** @var Equipment $equipment */
-            $equipment = $this->Maintenances->Equipments->findById($maintenance->equipment_id)->select('store_id')->first();
-            $maintenance->store_id = $equipment->store_id;
+        $maintenance->maintainable_type = Inflector::camelize(Inflector::tableize($maintenance->maintainable_type));
+        if (!$maintenance->maintainable_id) {
+            return;
         }
+
+        /** @var Equipment|EquipmentGroup $entity */
+        $entity = $this->getTableLocator()
+            ->get($maintenance->maintainable_type)
+            ->get($maintenance->maintainable_id);
+
+        $maintenance->store_id = $entity->store_id;
+
         if (!$this->Maintenances->save($maintenance)) {
             throw new ValidationException($maintenance);
         }
@@ -110,7 +120,7 @@ class MaintenancesController extends AppController
             ->contain([
                 'Items.Inventories',
                 'Procedures',
-                'Equipments',
+                'Maintainables',
             ]);
         $this->set(['maintenances' => $maintenances]);
     }
@@ -131,7 +141,7 @@ class MaintenancesController extends AppController
         $maintenance = $this->Maintenances->get(
             $id,
             [
-            'contain' => ['Equipments.Manufacturer', 'Items.ActiveStoreInventories', 'Procedures'],
+            'contain' => ['Maintainables', 'Items.ActiveStoreInventories', 'Procedures'],
             ]
         );
         $this->set(['maintenance' => $maintenance]);
@@ -141,14 +151,12 @@ class MaintenancesController extends AppController
     {
         $this->request->allowMethod(['JSON']);
         $catalogue = $this->Maintenances->find()
-            ->matching('Equipments', function (Query $query) {
-                return $query->matching('Stores', function (Query $query) {
-                    return $query->where(['Stores.company_id in' => [$this->Authentication->getUser()->company_id, 1]]);
-                });
+            ->innerJoinWith('Stores', function (Query $query) {
+                return $query->where(['Stores.company_id in' => [$this->Authentication->getUser()->company_id, 1]]);
             })
             ->contain([
+                'Maintainables',
                 'Items',
-                'Equipments',
                 'Stores',
             ])->toArray();
 
@@ -171,20 +179,25 @@ class MaintenancesController extends AppController
         $maintenance = $this->Maintenances->get($id, [
             'contain' => [
                 'Items' => ['ActiveStoreInventories'],
-                'Equipments'
+                'Maintainables'
             ]
         ]);
         $this->set(compact('maintenance'));
     }
 
     public function equipment($id = null) {
-        $maintenances = $this->Maintenances->find()->where(['Maintenances.equipment_id' => $id]);
+        $maintenances = $this->Maintenances->find()->where([
+            'Maintenances.maintainable_id' => $id,
+            'Maintenances.maintainable_type' => 'Equipments'
+        ]);
         $this->set(compact('maintenances'));
     }
 
-    public function copyMaintenance($equipmentId) {
+    public function copyMaintenance($maintainableType, $maintainableId) {
         $maintenances = $this->getRequest()->getData('maintenances');
-        $equipment = $this->Maintenances->Equipments->get($equipmentId);
+        $maintainableTable = $this->getTableLocator()->get(Inflector::camelize(Inflector::tableize($maintainableType)));
+        /** @var Equipment|EquipmentGroup $maintainable */
+        $maintainable = $maintainableTable->get($maintainableId);
 
         $companyItems = $this->Maintenances->Items->find()
             ->where([
@@ -203,8 +216,9 @@ class MaintenancesController extends AppController
             ]);
 
             $maintenance->id = null;
-            $maintenance->store_id = $equipment->store_id;
-            $maintenance->equipment_id = $equipment->id;
+            $maintenance->store_id = $maintainable->store_id;
+            $maintenance->maintainable_id = $maintainable->id;
+            $maintenance->maintainable_type = Inflector::camelize(Inflector::tableize($maintainableType));
             $maintenance->isNew(true);
 
             foreach ($maintenance->items as $item) {
@@ -216,7 +230,7 @@ class MaintenancesController extends AppController
                         ->find()
                         ->where([
                             'item_id' => $item->id,
-                            'store_id' => $equipment->store_id
+                            'store_id' => $maintainable->store_id
                         ])
                         ->first();
                     if ($inventory) {
@@ -233,7 +247,7 @@ class MaintenancesController extends AppController
                         ->Items
                         ->Inventories
                         ->newEntity([
-                            'store_id' => $equipment->store_id,
+                            'store_id' => $maintainable->store_id,
                             'cost' => 0,
                             'supplier_id' => 0,
                             'current_stock' => 0,

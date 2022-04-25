@@ -21,16 +21,17 @@ use Cake\ORM\Entity;
  * @property int $frequency_car
  * @property int $created
  * @property int $modified
- * @property int $equipment_id
+ * @property int $maintainable_id
  * @property string $photo
  * @property int $type
  * @property int last_cars_completed
  * @property FrozenTime last_completed_date
  * @property int $size
  * @property array $procedures
- * @property Object _joinData
+ * @property Object $_joinData
+ * @property string $maintainable_type
  *
- * @property   Equipment $equipment
+ * @property   Equipment|EquipmentGroup $maintainable
  * @property   Item[] $items
  * @property   Item[] $parts
  * @property   Item[] $tools
