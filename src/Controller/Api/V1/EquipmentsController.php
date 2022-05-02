@@ -43,7 +43,7 @@ class EquipmentsController extends AppController
         $equipment = $this->Equipments->find();
 
         if (!$store_id) {
-            $equipment = $this->Equipments->find()->innerJoinWith('Stores.Users', function (Query $query) {
+            $equipment->innerJoinWith('Stores.Users', function (Query $query) {
                 return $query->where(['Users.id' => $this->Authentication->getUser()->id]);
             });
         } else {
