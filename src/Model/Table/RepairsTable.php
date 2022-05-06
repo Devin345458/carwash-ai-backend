@@ -69,10 +69,9 @@ class RepairsTable extends Table
         $this->addBehavior('WhoDidIt');
 
         $this->hasMany('Comments')
-            ->setConditions(['commentable_type' => get_class($this)])
+            ->setConditions(['commentable_type' => static::class])
             ->setForeignKey('commentable_id')
             ->setBindingKey('id');
-
 
         $this->belongsTo('AssignedTo', [
             'foreignKey' => 'assigned_to_id',
@@ -98,7 +97,7 @@ class RepairsTable extends Table
         $this->belongsToMany('Items');
 
         $this->hasMany('Comments')
-            ->setConditions(['commentable_type' => get_class($this)])
+            ->setConditions(['commentable_type' => static::class])
             ->setForeignKey('commentable_id')
             ->setBindingKey('id')
             ->setSaveStrategy('append');
@@ -118,7 +117,6 @@ class RepairsTable extends Table
             ->setClassName('RepairReminders');
 
         $this->belongsToMany('Files');
-
     }
 
     /**
@@ -219,6 +217,13 @@ class RepairsTable extends Table
     public function findRepairs(Query $q, array $options)
     {
         $q->contain([
+                'Equipments' => [
+                    'fields' => [
+                        'Equipments.id',
+                        'Equipments.name',
+                        'Equipments.file_id',
+                    ],
+                ],
                 'Stores' => [
                     'fields' => [
                         'Stores.id',
@@ -231,7 +236,7 @@ class RepairsTable extends Table
                         'AssignedTo.first_name',
                         'AssignedTo.last_name',
                         'AssignedTo.file_id',
-                    ]
+                    ],
                 ],
             ])
             ->leftJoinWith('Comments')
@@ -267,10 +272,12 @@ class RepairsTable extends Table
 
         if (count($options['status'])) {
             $q->where(['Repairs.status IN' => $options['status']]);
+        } else {
+            $q->where(['Repairs.status <>' => Repair::STATUS_COMPLETE]);
         }
 
         if ($options['search']) {
-            $q->where(['Repairs.name LIKE' => '%'.$options['search'].'%']);
+            $q->where(['Repairs.name LIKE' => '%' . $options['search'] . '%']);
         }
 
         if (isset($options['priority']) && $options['priority'] !== -1) {

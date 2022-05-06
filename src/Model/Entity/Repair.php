@@ -44,6 +44,14 @@ use Cake\ORM\Entity;
  */
 class Repair extends Entity implements ActivityLoggableInterface
 {
+    public const STATUS_COMPLETE = 'Complete';
+    public const STATUS_PENDING = 'Pending Assignment';
+    public const STATUS_IN_PROGRESS = 'In Progress';
+    public const STATUS_ASSIGNED = 'Assigned';
+    public const STATUS_SCHEDULED = 'Scheduled';
+    public const STATUS_WAITING = 'Waiting';
+    public const STATUS_MONITORING = 'Monitoring';
+
     /**
      * Fields that can be mass assigned using newEntity() or patchEntity().
      *
