@@ -262,7 +262,7 @@ class MaintenancesTable extends Table
      * @param string $store_id The store id
      * @param string $user_id The user id
      * @param bool $due Whether to get due or upcoming
-     * @return Equipment[]
+     * @return Location[]
      */
     public function dueEquipmentMaintenance(string $store_id, string $user_id, bool $due): array
     {

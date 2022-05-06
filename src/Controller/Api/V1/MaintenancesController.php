@@ -117,12 +117,12 @@ class MaintenancesController extends AppController
 
     public function dashboardWidget($store_id = null)
     {
-        $dueMaintenance = $this->Maintenances->dueEquipmentMaintenance($store_id, $this->Authentication->getUser()->id, true);
-        $upcomingMaintenance = $this->Maintenances->dueEquipmentMaintenance($store_id, $this->Authentication->getUser()->id, false);
+        $dueMaintenance = $this->Maintenances->dueEquipmentMaintenance($store_id, true);
+        $upcomingMaintenance = $this->Maintenances->dueEquipmentMaintenance($store_id, false);
 
         $this->set([
-            'dueMaintenance' => count($dueMaintenance),
-            'upcomingMaintenance' => count($upcomingMaintenance),
+            'dueMaintenance' => count($dueMaintenance->maintenances),
+            'upcomingMaintenance' => count($upcomingMaintenance->maintenances),
         ]);
     }
 
