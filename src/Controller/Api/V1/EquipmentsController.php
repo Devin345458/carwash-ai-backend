@@ -255,40 +255,45 @@ class EquipmentsController extends AppController
             return $query->where(['Equipments.id' => $id]);
         })->extract('id')->toArray();
 
-        $completedMaintenance = $activityLogs->find()
-            ->where([
-                'ActivityLogs.scope_model' => 'MaintenanceSessionsMaintenances',
-                'ActivityLogs.action' => 'updated',
-            ])
-            ->innerJoinWith('MaintenanceSessionsMaintenances.Maintenances', function (Query $query) use ($id, $equipmentGroupIds) {
-                return $query
-                    ->where([
-                        'OR' => [
-                            ['Maintenances.maintainable_id' => $id, 'Maintenances.maintainable_type' => 'Equipments'],
-                            ['Maintenances.maintainable_id IN' => $equipmentGroupIds, 'Maintenances.maintainable_type' => 'EquipmentGroups']
-                        ]
-                    ]);
-            })
-            ->select([
-                'id' => 'ActivityLogs.id',
-                'created_at' => 'ActivityLogs.created_at',
-                'scope_model' => 'ActivityLogs.scope_model',
-                'scope_id' => 'ActivityLogs.scope_id',
-                'issuer_model' => 'ActivityLogs.issuer_model',
-                'issuer_id' => 'ActivityLogs.issuer_id',
-                'object_model' => 'ActivityLogs.object_model',
-                'object_id' => 'ActivityLogs.object_id',
-                'level' => 'ActivityLogs.level',
-                'action' => 'ActivityLogs.action',
-                'message' => 'ActivityLogs.message',
-                'data' => 'ActivityLogs.data',
-            ]);
-
         $activity_logs = $equipmentActivity
             ->union($repairActivity)
             ->union($maintenance)
-            ->union($comments)
-            ->union($completedMaintenance);
+            ->union($comments);
+
+        if ($equipmentGroupIds) {
+            $completedMaintenance = $activityLogs->find()
+                ->where([
+                    'ActivityLogs.scope_model' => 'MaintenanceSessionsMaintenances',
+                    'ActivityLogs.action' => 'updated',
+                ])
+                ->innerJoinWith('MaintenanceSessionsMaintenances.Maintenances', function (Query $query) use ($id, $equipmentGroupIds) {
+                    return $query->where([
+                            'OR' => [
+                                ['Maintenances.maintainable_id' => $id, 'Maintenances.maintainable_type' => 'Equipments'],
+                                ['Maintenances.maintainable_id IN' => $equipmentGroupIds, 'Maintenances.maintainable_type' => 'EquipmentGroups']
+                            ]
+                        ]);
+                })
+                ->select([
+                    'id' => 'ActivityLogs.id',
+                    'created_at' => 'ActivityLogs.created_at',
+                    'scope_model' => 'ActivityLogs.scope_model',
+                    'scope_id' => 'ActivityLogs.scope_id',
+                    'issuer_model' => 'ActivityLogs.issuer_model',
+                    'issuer_id' => 'ActivityLogs.issuer_id',
+                    'object_model' => 'ActivityLogs.object_model',
+                    'object_id' => 'ActivityLogs.object_id',
+                    'level' => 'ActivityLogs.level',
+                    'action' => 'ActivityLogs.action',
+                    'message' => 'ActivityLogs.message',
+                    'data' => 'ActivityLogs.data',
+                ]);
+            $activity_logs->union($completedMaintenance);
+        }
+
+
+
+
 
         $query = $activityLogs
             ->find()
@@ -310,6 +315,8 @@ class EquipmentsController extends AppController
                 'ActivityLogs.action',
             ])
             ->order(['ActivityLogs.created_at' => 'DESC']);
+
+        $query->toArray();
 
         $this->set(['activity_logs' => $this->paginate($query, [''])]);
     }

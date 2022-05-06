@@ -265,7 +265,7 @@ class MaintenancesTable extends Table
      * @param bool $due Whether to get due or upcoming
      * @return Equipment[]
      */
-    public function dueEquipmentMaintenance(string $store_id, string $user_id, bool $due): array
+    public function dueEquipmentMaintenance(string $store_id, bool $due): array
     {
         $maintenances = $this
             ->find('due', compact('store_id', 'due'))
@@ -332,7 +332,7 @@ class MaintenancesTable extends Table
                    ->sortBy('maintainable.position', SORT_ASC);
             });
 
-        return $locations->toArray();
+        return $locations->toList();
     }
 
     /**
