@@ -108,8 +108,8 @@ class MaintenancesController extends AppController
      */
     public function storesMaintenance(string $store_id)
     {
-        $dueMaintenance = $this->Maintenances->dueEquipmentMaintenance($store_id, $this->Authentication->getUser()->id, true);
-        $upcomingMaintenance = $this->Maintenances->dueEquipmentMaintenance($store_id, $this->Authentication->getUser()->id, false);
+        $dueMaintenance = $this->Maintenances->dueEquipmentMaintenance($store_id, true);
+        $upcomingMaintenance = $this->Maintenances->dueEquipmentMaintenance($store_id, false);
         $this->set(compact('dueMaintenance', 'upcomingMaintenance'));
     }
 

@@ -261,11 +261,10 @@ class MaintenancesTable extends Table
      * Returns store maintenance grouped by location and grouped equipment and sorted by equipment order
      *
      * @param string $store_id The store id
-     * @param string $user_id The user id
      * @param bool $due Whether to get due or upcoming
      * @return Equipment[]
      */
-    public function dueEquipmentMaintenance(string $store_id, string $user_id, bool $due): array
+    public function dueEquipmentMaintenance(string $store_id, bool $due): array
     {
         $maintenances = $this
             ->find('due', compact('store_id', 'due'))
@@ -274,7 +273,7 @@ class MaintenancesTable extends Table
                 'Maintainables',
                 'Items.Inventories' => function (Query $q) use ($store_id) {
                     return $q->where(['Inventories.store_id' => $store_id]);
-                }
+                },
             ])
             ->all();
 
@@ -285,7 +284,11 @@ class MaintenancesTable extends Table
 
         $locations = collection([]);
 
-        $maintenances->map(function (Maintenance $maintenance) use ($equipmentsTable, $equipmentGroupsTable) {
+        $maintenances
+            ->filter(function (Maintenance $maintenance) {
+                return (bool)$maintenance->maintainable;
+            })
+            ->map(function (Maintenance $maintenance) use ($equipmentsTable, $equipmentGroupsTable) {
                 switch ($maintenance->maintainable_type) {
                     case 'Equipments':
                         $equipmentsTable->loadInto($maintenance->maintainable, ['Locations']);
@@ -293,9 +296,9 @@ class MaintenancesTable extends Table
                     case 'EquipmentGroups':
                         $equipmentGroupsTable->loadInto($maintenance->maintainable, ['Equipments.Locations']);
                         $location = collection($maintenance->maintainable->equipments)
-                            ->map(function (Equipment $equipment) {
-                               return $equipment->location;
-                            })
+                        ->map(function (Equipment $equipment) {
+                            return $equipment->location;
+                        })
                             ->sortBy('position', SORT_ASC)->first();
 
                         $position = collection($maintenance->maintainable->equipments)
@@ -317,22 +320,22 @@ class MaintenancesTable extends Table
             })
             ->sortBy('maintainable.location.position', SORT_ASC)
             ->each(function (Maintenance $maintenance) use (&$locations) {
-               if (!$locations->firstMatch(['id' => $maintenance->maintainable->location->id])) {
-                   $locations = $locations->appendItem($maintenance->maintainable->location);
-               }
+                if (!$locations->firstMatch(['id' => $maintenance->maintainable->location->id])) {
+                    $locations = $locations->appendItem($maintenance->maintainable->location);
+                }
 
-               $location = $locations->firstMatch(['id' => $maintenance->maintainable->location->id]);
-               if (!$location->maintenances) {
-                   $location->maintenances = collection([]);
-               }
+                $location = $locations->firstMatch(['id' => $maintenance->maintainable->location->id]);
+                if (!$location->maintenances) {
+                    $location->maintenances = collection([]);
+                }
 
-               $location->maintenances = $location
+                $location->maintenances = $location
                    ->maintenances
                    ->appendItem($maintenance)
                    ->sortBy('maintainable.position', SORT_ASC);
             });
 
-        return $locations->toArray();
+        return $locations->toList();
     }
 
     /**
