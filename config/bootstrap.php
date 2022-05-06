@@ -33,6 +33,7 @@ use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\Core\Configure\Engine\PhpConfig;
 use Cake\Database\Type;
+use Cake\Database\TypeFactory;
 use Cake\Datasource\ConnectionManager;
 use Cake\Error\ConsoleErrorHandler;
 use Cake\Error\ErrorHandler;
@@ -173,6 +174,7 @@ Type::build('time');
 Type::build('date');
 Type::build('datetime');
 Type::build('timestamp');
+TypeFactory::build('datetime')->useLocaleParser();
 
 FrozenDate::setToStringFormat('yyyy-MM-dd');
 FrozenTime::setToStringFormat('yyyy-MM-dd H:mm:s');
@@ -196,11 +198,8 @@ ChargeBee_Environment::configure(env('CHARGEBEE_SITE'), env('CHARGEBEE_KEY'));
  * @todo - Figure out if these are the correct format
  *
  */
-Time::setJsonEncodeFormat('yyyy-MM-dd HH:mm:ss');  // For any mutable DateTime
 FrozenTime::setJsonEncodeFormat('yyyy-MM-dd HH:mm:ss');  // For any immutable DateTime
-Date::setJsonEncodeFormat('yyyy-MM-dd');  // For any mutable Date
 FrozenDate::setJsonEncodeFormat('yyyy-MM-dd');  // For any immutable Dat
-Date::setToStringFormat('yyyy-MM-dd');
 
 
 Configure::load('app_queue');

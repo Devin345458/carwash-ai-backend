@@ -77,24 +77,7 @@ services:
       - traefik.http.routers.minio-https.entrypoints=https
       - traefik.http.routers.minio-https.tls=true
       - traefik.http.services.minio.loadbalancer.server.port=9000
-    command:
-      - server
-      - /data
-      - --console-address
-      - ":9001"
-
-  createbuckets:
-    image: minio/mc
-    depends_on:
-      - minio
-    entrypoint:
-      /bin/sh -c "
-      /usr/bin/mc config host add myminio http://minio:9000 minio minio123;
-      /usr/bin/mc rm -r --force myminio/carwash-ai-files || true;
-      /usr/bin/mc mb myminio/carwash-ai-files;
-      /usr/bin/mc policy set download myminio/carwash-ai-files;
-      exit 0;
-      "
+    command: server /data --console-address ":9001"
 
 networks:
   default:

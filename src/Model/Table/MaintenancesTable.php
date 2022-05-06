@@ -3,6 +3,7 @@ namespace App\Model\Table;
 
 use App\Error\Exception\ValidationException;
 use App\Model\Entity\Equipment;
+use App\Model\Entity\EquipmentGroup;
 use App\Model\Entity\Location;
 use App\Model\Entity\Maintenance;
 use App\Model\Entity\Store;
@@ -13,20 +14,24 @@ use Cake\I18n\Date;
 use Cake\I18n\FrozenDate;
 use Cake\I18n\FrozenTime;
 use Cake\I18n\Time;
+use Cake\ORM\Association;
 use Cake\ORM\Association\BelongsTo;
 use Cake\ORM\Association\BelongsToMany;
 use Cake\ORM\Association\HasMany;
 use Cake\ORM\Behavior\TimestampBehavior;
+use Cake\ORM\Locator\TableLocator;
 use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
+use Cake\ORM\TableRegistry;
 use Cake\Validation\Validator;
+use Elastica\Query\Ids;
 use Exception;
+use Polymorphic\Model\Behavior\MorphBehavior;
 
 /**
  * Maintenances Model
  *
- * @property EquipmentsTable|BelongsTo $Equipments
  * @property StoresTable|BelongsTo $Stores
  * @property ItemsTable|BelongsToMany Items
  * @property ItemsTable|BelongsToMany Parts
@@ -43,6 +48,7 @@ use Exception;
  * @method Maintenance[] patchEntities($entities, array $data, array $options = [])
  * @method Maintenance findOrCreate($search, callable $callback = null, $options = [])
  * @mixin TimestampBehavior
+ * @mixin MorphBehavior
  */
 class MaintenancesTable extends Table
 {
@@ -61,6 +67,7 @@ class MaintenancesTable extends Table
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
+        $this->addBehavior('Polymorphic.Morph');
 
         $this->addBehavior('WhoDidIt', [
             'userModel' => 'Users',
@@ -71,10 +78,7 @@ class MaintenancesTable extends Table
 
         $this->belongsTo('Photos');
 
-        $this->belongsTo('Equipments', [
-            'foreignKey' => 'equipment_id',
-            'joinType' => 'INNER',
-        ]);
+        $this->morphsTo('Maintainables');
 
         $this->belongsTo('Stores');
 
@@ -149,9 +153,7 @@ class MaintenancesTable extends Table
                 'frequency_days',
                 'You must enter a frequency to do maintenance',
                 function ($context) {
-                    $test = isset($context['data']['frequency_cars']);
-
-                    return $test;
+                        return isset($context['data']['frequency_cars']);
                 }
             );
 
@@ -172,8 +174,8 @@ class MaintenancesTable extends Table
             ->allowEmptyString('draft');
 
         $validator
-            ->integer('equipment_id')
-            ->notEmptyString('equipment_id');
+            ->integer('maintainable_id')
+            ->notEmptyString('maintainable_id');
 
         $validator
             ->uuid('store_id')
@@ -203,7 +205,6 @@ class MaintenancesTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->existsIn(['equipment_id'], 'Equipments'));
         $rules->add($rules->existsIn(['store_id'], 'Stores'));
 
         $rules->add(function (Maintenance $maintenance, $options) {
@@ -260,49 +261,81 @@ class MaintenancesTable extends Table
      * Returns store maintenance grouped by location and grouped equipment and sorted by equipment order
      *
      * @param string $store_id The store id
-     * @param string $user_id The user id
      * @param bool $due Whether to get due or upcoming
      * @return Location[]
      */
-    public function dueEquipmentMaintenance(string $store_id, string $user_id, bool $due): array
+    public function dueEquipmentMaintenance(string $store_id, bool $due): array
     {
-        $query = $this
-            ->Equipments
-            ->Locations
-            ->find()
-            ->where(['Locations.store_id' => $store_id])
-            ->innerJoinWith('Equipments.Maintenances', function (Query $query) use ($store_id, $due) {
-                return $query->find('due', compact('store_id', 'due'));
-            })
+        $maintenances = $this
+            ->find('due', compact('store_id', 'due'))
+            ->where(['Maintenances.store_id' => $store_id])
             ->contain([
-                'Equipments.Maintenances' => function (Query $query) use ($store_id, $due) {
-                    $query->find('due', compact('store_id', 'due'));
-                    $query->contain([
-                        'Items.Inventories' => function (Query $q) use ($store_id) {
-                            return $q->where(['Inventories.store_id' => $store_id]);
-                        },
-                        'Equipments.Locations',
-                    ]);
-                    $query->order('Equipments.position');
-
-                    return $query;
+                'Maintainables',
+                'Items.Inventories' => function (Query $q) use ($store_id) {
+                    return $q->where(['Inventories.store_id' => $store_id]);
                 },
             ])
-            ->group('Locations.id');
+            ->all();
 
-        $locations = $query->all()->map(function (Location $location) {
-            $location->maintenances = [];
-            foreach ($location->equipments as $equipment) {
-                foreach ($equipment->maintenances as $maintenance) {
-                    $location->maintenances[] = $maintenance;
+        /** @var EquipmentsTable $equipmentsTable */
+        $equipmentsTable = TableRegistry::getTableLocator()->get('Equipments');
+        /** @var EquipmentGroupsTable $equipmentGroupsTable */
+        $equipmentGroupsTable = TableRegistry::getTableLocator()->get('EquipmentGroups');
+
+        $locations = collection([]);
+
+        $maintenances
+            ->filter(function (Maintenance $maintenance) {
+                return (bool)$maintenance->maintainable;
+            })
+            ->map(function (Maintenance $maintenance) use ($equipmentsTable, $equipmentGroupsTable) {
+                switch ($maintenance->maintainable_type) {
+                    case 'Equipments':
+                        $equipmentsTable->loadInto($maintenance->maintainable, ['Locations']);
+                        break;
+                    case 'EquipmentGroups':
+                        $equipmentGroupsTable->loadInto($maintenance->maintainable, ['Equipments.Locations']);
+                        $location = collection($maintenance->maintainable->equipments)
+                        ->map(function (Equipment $equipment) {
+                            return $equipment->location;
+                        })
+                            ->sortBy('position', SORT_ASC)->first();
+
+                        $position = collection($maintenance->maintainable->equipments)
+                            ->filter(function (Equipment $equipment) use ($location) {
+                                return $equipment->location_id === $location->id;
+                            })
+                            ->sortBy('position', SORT_ASC)
+                            ->first()
+                            ->position;
+
+                        $maintenance->maintainable->location = $location;
+                        $maintenance->maintainable->position = $position;
+                        break;
+                    default:
+                        throw new Exception('Invalid Association');
                 }
-            }
-            unset($location->equipments);
 
-            return $location;
-        });
+                return $maintenance;
+            })
+            ->sortBy('maintainable.location.position', SORT_ASC)
+            ->each(function (Maintenance $maintenance) use (&$locations) {
+                if (!$locations->firstMatch(['id' => $maintenance->maintainable->location->id])) {
+                    $locations = $locations->appendItem($maintenance->maintainable->location);
+                }
 
-        return $locations->toArray();
+                $location = $locations->firstMatch(['id' => $maintenance->maintainable->location->id]);
+                if (!$location->maintenances) {
+                    $location->maintenances = [];
+                }
+
+                $location->maintenances = collection($location
+                   ->maintenances)
+                   ->appendItem($maintenance)
+                   ->sortBy('maintainable.position', SORT_ASC)->toList();
+            });
+
+        return $locations->toList();
     }
 
     /**
@@ -315,7 +348,7 @@ class MaintenancesTable extends Table
     public function findDue(Query $q, array $options)
     {
         /** @var Store $store */
-        $store = $this->Equipments->Stores->findById($options['store_id'])->first();
+        $store = $this->Stores->findById($options['store_id'])->first();
 
         $where = [];
         if ($options['due']) {

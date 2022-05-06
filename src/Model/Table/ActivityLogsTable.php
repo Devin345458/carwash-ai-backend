@@ -51,12 +51,12 @@ class ActivityLogsTable extends Table
     /**
      * Add data type
      *
-     * @param TableSchemaInterface $table the table
+     * @param TableSchemaInterface $schema the table
      * @return TableSchemaInterface
      */
-    protected function _initializeSchema(TableSchemaInterface $table): TableSchemaInterface
+    protected function _initializeSchema(TableSchemaInterface $schema): TableSchemaInterface
     {
-        $schema = parent::_initializeSchema($table);
+        $schema = parent::_initializeSchema($schema);
         $schema->setColumnType('data', 'json');
 
         return $schema;
@@ -213,7 +213,7 @@ class ActivityLogsTable extends Table
 
         $activity = $this->newEntity([
             'scope_model' => $table->getRegistryAlias(),
-            'scope_id' => $table->getPrimaryKey(),
+            'scope_id' => $entity->get($table->getPrimaryKey()),
             'issuer_model' => 'Users',
             'issuer_id' => $user_id,
             'object_model' => Inflector::singularize($table->getRegistryAlias()),

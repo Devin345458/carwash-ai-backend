@@ -175,10 +175,7 @@ class RepairsController extends AppController
         $activityLogs = $this->getTableLocator()->get('ActivityLogs');
 
         $repairActivity = $activityLogs->find()
-            ->where(['ActivityLogs.scope_model' => 'Repairs'])
-            ->innerJoinWith('Repairs', function (Query $query) use ($id) {
-                return $query->where(['Repairs.equipment_id' => $id]);
-            })
+            ->where(['ActivityLogs.scope_model' => 'Repairs', 'ActivityLogs.scope_id' => $id])
             ->select([
                 'id' => 'ActivityLogs.id',
                 'created_at' => 'ActivityLogs.created_at',

@@ -39,7 +39,7 @@ class MaintenanceSessionsController extends AppController
                     'Tools.Files',
                     'Parts.Files',
                     'Consumables.Files',
-                    'Equipments',
+                    'Maintainables',
                 ],
             ])->first();
         $this->set(compact('session'));
