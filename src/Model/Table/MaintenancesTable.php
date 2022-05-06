@@ -326,13 +326,13 @@ class MaintenancesTable extends Table
 
                 $location = $locations->firstMatch(['id' => $maintenance->maintainable->location->id]);
                 if (!$location->maintenances) {
-                    $location->maintenances = collection([]);
+                    $location->maintenances = [];
                 }
 
-                $location->maintenances = $location
-                   ->maintenances
+                $location->maintenances = collection($location
+                   ->maintenances)
                    ->appendItem($maintenance)
-                   ->sortBy('maintainable.position', SORT_ASC);
+                   ->sortBy('maintainable.position', SORT_ASC)->toList();
             });
 
         return $locations->toList();
